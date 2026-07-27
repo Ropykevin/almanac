@@ -53,3 +53,5 @@ Thumbs.db
 *.pid
 
 .env.example
+Deploy.md
+DEPLOY.md

@@ -1,44 +1,58 @@
-#!/usr/bin/env bash
-# Almanac Africa AI — VPS deployment helper
-# Usage: ./deployment.sh <command> [args]
-# Do not run with `sh deployment.sh` — this script requires bash.
-if [[ -z "${BASH_VERSION:-}" ]]; then
-  echo "Run with bash:  ./deployment.sh <command>"
-  echo "Not:            sh deployment.sh"
-  exit 1
-fi
-set -euo pipefail
+#!/bin/sh
+# Almanac Africa AI — VPS deployment
+#
+# One-shot (recommended):
+#   sh deployment.sh
+#
+# Or:
+#   ./deployment.sh
+#   sh deployment.sh all
+#
+# Other commands: sh deployment.sh help
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 
-COMPOSE=(docker compose)
 DOMAIN_DEFAULT="almanac.africa"
 NGINX_SITE="almanac"
 NGINX_AVAIL="/etc/nginx/sites-available/${NGINX_SITE}"
 NGINX_ENABLED="/etc/nginx/sites-enabled/${NGINX_SITE}"
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Safe .env reader (no bash source — passwords may contain ! $ " etc.)
 # ---------------------------------------------------------------------------
 
-load_env() {
-  if [[ ! -f .env ]]; then
-    echo "Missing .env — run: ./deployment.sh init"
-    exit 1
+env_get() {
+  # Usage: env_get KEY [default]
+  key="$1"
+  default="${2:-}"
+  if [ ! -f .env ]; then
+    printf '%s\n' "$default"
+    return 0
   fi
+  # Take first matching KEY=value line; strip CR; strip surrounding quotes
+  val="$(
+    grep -E "^[[:space:]]*${key}=" .env 2>/dev/null | head -n 1 | sed "s/^[[:space:]]*${key}=//" | tr -d '\r' || true
+  )"
+  # Remove matching wrapping quotes only
+  case "$val" in
+    \"*\") val="$(printf '%s' "$val" | sed 's/^"//;s/"$//')" ;;
+    \'*\') val="$(printf '%s' "$val" | sed "s/^'//;s/'$//")" ;;
+  esac
+  if [ -z "$val" ]; then
+    printf '%s\n' "$default"
+  else
+    printf '%s\n' "$val"
+  fi
+}
 
-  # Passwords often contain ! $ etc. — turn off nounset + history expansion while sourcing.
-  set +u
-  set +H
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
-  set -u
-
-  HOST_PORT="${HOST_PORT:-8002}"
-  DOMAIN="${DOMAIN:-$DOMAIN_DEFAULT}"
+load_vars() {
+  HOST_PORT="$(env_get HOST_PORT 8002)"
+  DOMAIN="$(env_get DOMAIN "$DOMAIN_DEFAULT")"
+  SECRET_KEY="$(env_get SECRET_KEY)"
+  POSTGRES_PASSWORD="$(env_get POSTGRES_PASSWORD)"
   HEALTH_URL="http://127.0.0.1:${HOST_PORT}/health"
 }
 
@@ -49,60 +63,65 @@ need_cmd() {
   }
 }
 
-require_env_keys() {
-  load_env
-  local missing=0
-  for key in SECRET_KEY POSTGRES_PASSWORD; do
-    if [[ -z "${!key:-}" || "${!key}" == "dev-only-change-me" || "${!key}" == "change-me-to-a-long-random-string" ]]; then
-      echo "Set a strong ${key} in .env"
-      missing=1
-    fi
-  done
-  if [[ "$missing" -ne 0 ]]; then
+need_env() {
+  if [ ! -f .env ]; then
+    echo "Missing .env"
+    echo "  cp .env.example .env"
+    echo "  Then set SECRET_KEY and POSTGRES_PASSWORD"
+    exit 1
+  fi
+  load_vars
+  if [ -z "$SECRET_KEY" ] || [ "$SECRET_KEY" = "dev-only-change-me" ] || [ "$SECRET_KEY" = "change-me-to-a-long-random-string" ]; then
+    echo "Set a strong SECRET_KEY in .env  (run: sh deployment.sh secret)"
+    exit 1
+  fi
+  if [ -z "$POSTGRES_PASSWORD" ] || [ "$POSTGRES_PASSWORD" = "almanac" ]; then
+    echo "WARNING: set a strong POSTGRES_PASSWORD in .env before production use."
+  fi
+  if [ -z "$POSTGRES_PASSWORD" ]; then
+    echo "Set POSTGRES_PASSWORD in .env"
     exit 1
   fi
 }
 
+compose() {
+  docker compose "$@"
+}
+
 usage() {
   cat <<EOF
-Almanac Africa AI — deployment helper
+Almanac Africa AI — deploy helper  (domain: ${DOMAIN_DEFAULT})
 
-Usage: ./deployment.sh <command> [args]
+  sh deployment.sh              Run full setup (recommended)
+  sh deployment.sh all          Same as above
+  sh deployment.sh help
 
-Setup
-  init                 Copy .env.example → .env (if missing) and print next steps
-  secret               Print a strong SECRET_KEY candidate
-  check                Validate .env + docker availability
+Steps in "all":
+  1. docker compose up --build
+  2. wait for health on HOST_PORT
+  3. nginx HTTP for almanac.africa
+  4. certbot TLS
+  5. nginx SSL config
+  6. prompt to create admin user
 
-App (Docker Compose)
-  up                   Build and start stack in background
-  down                 Stop stack
-  restart              Restart web (+ ensure db is up)
-  rebuild              Rebuild images and recreate containers
-  ps                   Show compose status
-  logs [service]       Tail logs (default: web)
-  health               Curl local health endpoint
-  shell                Open a shell in the web container
-  migrate              Run flask db upgrade
-  create-user          Create admin (flask create-user --role SUPER_ADMIN)
-  newsletters          Process due scheduled newsletters
-
-nginx + TLS  (default domain: almanac.africa)
-  nginx-http [domain]  Install HTTP nginx site (proxy → 127.0.0.1:\$HOST_PORT)
-  nginx-ssl [domain]   Install full SSL nginx site (after certbot)
-  certbot [domain]     Issue Let's Encrypt certs for domain (+ www)
-
-All-in-one
-  deploy               require env → up → wait health → print status
-  status               ps + health + recent web logs
-
-Examples
-  ./deployment.sh init
-  ./deployment.sh deploy
-  ./deployment.sh create-user
-  ./deployment.sh nginx-http
-  ./deployment.sh certbot
-  ./deployment.sh nginx-ssl
+Other commands:
+  init          Create .env from example
+  secret        Print a random SECRET_KEY
+  up            Start stack
+  down          Stop stack
+  restart       Recreate web
+  rebuild       Rebuild images + recreate
+  ps            Status
+  logs [svc]    Tail logs (default web)
+  health        Curl health URL
+  status        ps + health + recent logs
+  shell         Shell in web container
+  migrate       flask db upgrade
+  create-user   Create SUPER_ADMIN
+  newsletters   Send due scheduled newsletters
+  nginx-http    Install HTTP nginx site
+  certbot       Let's Encrypt for almanac.africa
+  nginx-ssl     Install HTTPS nginx site
 EOF
 }
 
@@ -111,19 +130,17 @@ EOF
 # ---------------------------------------------------------------------------
 
 cmd_init() {
-  if [[ -f .env ]]; then
+  if [ -f .env ]; then
     echo ".env already exists"
   else
     cp .env.example .env
-    echo "Created .env from .env.example"
+    echo "Created .env"
   fi
-  echo
-  echo "Edit .env and set at least:"
-  echo "  SECRET_KEY=      # ./deployment.sh secret"
-  echo "  POSTGRES_PASSWORD="
-  echo "  HOST_PORT=8002   # free port on this VPS (maps to the app)"
-  echo
-  echo "Then: ./deployment.sh deploy"
+  echo "Edit .env:"
+  echo "  SECRET_KEY=\$(sh deployment.sh secret)"
+  echo "  POSTGRES_PASSWORD=..."
+  echo "  HOST_PORT=8002"
+  echo "Then: sh deployment.sh"
 }
 
 cmd_secret() {
@@ -136,152 +153,124 @@ cmd_secret() {
   fi
 }
 
-cmd_check() {
-  need_cmd docker
-  docker compose version >/dev/null
-  require_env_keys
-  echo "OK — docker + .env look ready (HOST_PORT=${HOST_PORT})"
-}
-
 cmd_up() {
-  require_env_keys
-  "${COMPOSE[@]}" up --build -d
-  cmd_ps
+  need_env
+  need_cmd docker
+  compose up --build -d
+  compose ps
 }
 
 cmd_down() {
-  load_env
-  "${COMPOSE[@]}" down
+  need_cmd docker
+  compose down
 }
 
 cmd_restart() {
-  require_env_keys
-  "${COMPOSE[@]}" up -d db
-  "${COMPOSE[@]}" up -d --force-recreate web
+  need_env
+  compose up -d db
+  compose up -d --force-recreate web
   cmd_health
 }
 
 cmd_rebuild() {
-  require_env_keys
-  "${COMPOSE[@]}" build --no-cache
-  "${COMPOSE[@]}" up -d --force-recreate
+  need_env
+  compose build --no-cache
+  compose up -d --force-recreate
   cmd_wait_health
-  cmd_ps
 }
 
 cmd_ps() {
-  load_env
-  "${COMPOSE[@]}" ps
+  need_cmd docker
+  compose ps
 }
 
 cmd_logs() {
-  load_env
-  local service="${1:-web}"
-  "${COMPOSE[@]}" logs -f --tail=100 "$service"
+  svc="${1:-web}"
+  compose logs -f --tail=100 "$svc"
 }
 
 cmd_health() {
-  load_env
+  load_vars
   echo "GET ${HEALTH_URL}"
   curl -fsS "$HEALTH_URL"
   echo
 }
 
 cmd_wait_health() {
-  load_env
+  load_vars
   echo "Waiting for ${HEALTH_URL} ..."
-  local i
-  for i in $(seq 1 60); do
+  i=1
+  while [ "$i" -le 60 ]; do
     if curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then
       echo "Healthy"
       cmd_health
       return 0
     fi
+    i=$((i + 1))
     sleep 2
   done
   echo "Health check timed out"
-  "${COMPOSE[@]}" logs web --tail=80
+  compose logs web --tail=80
   exit 1
 }
 
 cmd_shell() {
-  load_env
-  "${COMPOSE[@]}" exec web bash || "${COMPOSE[@]}" exec web sh
+  compose exec web sh
 }
 
 cmd_migrate() {
-  load_env
-  "${COMPOSE[@]}" exec web flask db upgrade
+  compose exec web flask db upgrade
 }
 
 cmd_create_user() {
-  load_env
-  "${COMPOSE[@]}" exec web flask create-user --role SUPER_ADMIN
+  compose exec web flask create-user --role SUPER_ADMIN
 }
 
 cmd_newsletters() {
-  load_env
-  "${COMPOSE[@]}" exec web flask send-scheduled-newsletters
+  compose exec web flask send-scheduled-newsletters
 }
 
 cmd_nginx_http() {
-  load_env
-  local domain="${1:-$DOMAIN}"
+  need_env
   need_cmd nginx
+  domain="${1:-$DOMAIN}"
   sudo mkdir -p /var/www/certbot
   sudo cp "$ROOT/deploy/nginx/almanac.http.conf" "$NGINX_AVAIL"
-  # Keep baked-in almanac.africa; if another domain is passed, rewrite it
-  if [[ "$domain" != "almanac.africa" ]]; then
+  if [ "$domain" != "almanac.africa" ]; then
     sudo sed -i "s/almanac\\.africa/${domain}/g" "$NGINX_AVAIL"
   fi
-  sudo sed -i "s/127\\.0\\.0\\.1:[0-9]\\+/127.0.0.1:${HOST_PORT}/g" "$NGINX_AVAIL"
+  sudo sed -i "s/127\\.0\\.0\\.1:[0-9][0-9]*/127.0.0.1:${HOST_PORT}/g" "$NGINX_AVAIL"
   sudo ln -sf "$NGINX_AVAIL" "$NGINX_ENABLED"
   sudo rm -f /etc/nginx/sites-enabled/default
   sudo nginx -t
   sudo systemctl reload nginx
-  echo "nginx HTTP site enabled for ${domain} → 127.0.0.1:${HOST_PORT}"
-  echo "Visit http://${domain}"
+  echo "nginx HTTP → http://${domain} → 127.0.0.1:${HOST_PORT}"
 }
 
 cmd_nginx_ssl() {
-  load_env
-  local domain="${1:-$DOMAIN}"
+  need_env
   need_cmd nginx
+  domain="${1:-$DOMAIN}"
   sudo cp "$ROOT/deploy/nginx/almanac.conf" "$NGINX_AVAIL"
-  if [[ "$domain" != "almanac.africa" ]]; then
+  if [ "$domain" != "almanac.africa" ]; then
     sudo sed -i "s/almanac\\.africa/${domain}/g" "$NGINX_AVAIL"
   fi
-  sudo sed -i "s/127\\.0\\.0\\.1:[0-9]\\+/127.0.0.1:${HOST_PORT}/g" "$NGINX_AVAIL"
+  sudo sed -i "s/127\\.0\\.0\\.1:[0-9][0-9]*/127.0.0.1:${HOST_PORT}/g" "$NGINX_AVAIL"
   sudo ln -sf "$NGINX_AVAIL" "$NGINX_ENABLED"
   sudo nginx -t
   sudo systemctl reload nginx
-  echo "nginx SSL site enabled for ${domain} → 127.0.0.1:${HOST_PORT}"
-  echo "Visit https://${domain}"
+  echo "nginx SSL → https://${domain} → 127.0.0.1:${HOST_PORT}"
 }
 
 cmd_certbot() {
-  load_env
-  local domain="${1:-$DOMAIN}"
+  need_env
   need_cmd certbot
+  domain="${1:-$DOMAIN}"
   sudo certbot --nginx -d "$domain" -d "www.${domain}"
 }
 
-cmd_deploy() {
-  require_env_keys
-  echo "==> Building and starting Almanac"
-  "${COMPOSE[@]}" up --build -d
-  cmd_wait_health
-  echo
-  echo "App is up on ${HEALTH_URL}"
-  echo "Create admin:  ./deployment.sh create-user"
-  echo "nginx HTTP:    ./deployment.sh nginx-http"
-  echo "TLS:           ./deployment.sh certbot"
-  echo "nginx SSL:     ./deployment.sh nginx-ssl"
-  echo "Site:          https://almanac.africa"
-}
-
 cmd_status() {
-  load_env
+  load_vars
   cmd_ps
   echo
   if curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then
@@ -290,40 +279,95 @@ cmd_status() {
     echo "Health: DOWN (${HEALTH_URL})"
   fi
   echo
-  "${COMPOSE[@]}" logs web --tail=30
+  compose logs web --tail=30
+}
+
+cmd_all() {
+  need_cmd docker
+  need_cmd curl
+  need_env
+
+  echo "=========================================="
+  echo " Almanac deploy → ${DOMAIN}"
+  echo " App port       → 127.0.0.1:${HOST_PORT}"
+  echo "=========================================="
+
+  echo
+  echo "==> 1/5  Docker Compose up"
+  compose up --build -d
+  cmd_wait_health
+
+  echo
+  echo "==> 2/5  nginx HTTP"
+  if command -v nginx >/dev/null 2>&1; then
+    cmd_nginx_http "$DOMAIN"
+  else
+    echo "nginx not installed — skip. Install: sudo apt install -y nginx"
+  fi
+
+  echo
+  echo "==> 3/5  Let's Encrypt (certbot)"
+  if command -v certbot >/dev/null 2>&1; then
+    cmd_certbot "$DOMAIN" || echo "certbot failed or skipped — fix DNS then: sh deployment.sh certbot"
+  else
+    echo "certbot not installed — skip. Install: sudo apt install -y certbot python3-certbot-nginx"
+  fi
+
+  echo
+  echo "==> 4/5  nginx SSL config"
+  if command -v nginx >/dev/null 2>&1; then
+    if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+      cmd_nginx_ssl "$DOMAIN"
+    else
+      echo "No cert yet at /etc/letsencrypt/live/${DOMAIN}/ — skip nginx-ssl"
+    fi
+  fi
+
+  echo
+  echo "==> 5/5  Admin user"
+  echo "Create the first Super Admin now? [y/N]"
+  read -r ans || ans=n
+  case "$ans" in
+    y|Y|yes|YES) cmd_create_user ;;
+    *) echo "Later: sh deployment.sh create-user" ;;
+  esac
+
+  echo
+  echo "Done."
+  echo "  Local health: ${HEALTH_URL}"
+  echo "  Site:         https://${DOMAIN}"
+  echo "  Status:       sh deployment.sh status"
 }
 
 # ---------------------------------------------------------------------------
-# Main
+# Main — no args runs full deploy
 # ---------------------------------------------------------------------------
 
-cmd="${1:-}"
-shift || true
+cmd="${1:-all}"
+[ "$#" -gt 0 ] && shift
 
 case "$cmd" in
-  init)          cmd_init ;;
-  secret)        cmd_secret ;;
-  check)         cmd_check ;;
-  up)            cmd_up ;;
-  down)          cmd_down ;;
-  restart)       cmd_restart ;;
-  rebuild)       cmd_rebuild ;;
-  ps)            cmd_ps ;;
-  logs)          cmd_logs "$@" ;;
-  health)        cmd_health ;;
-  shell)         cmd_shell ;;
-  migrate)       cmd_migrate ;;
-  create-user)   cmd_create_user ;;
-  newsletters)   cmd_newsletters ;;
-  nginx-http)    cmd_nginx_http "$@" ;;
-  nginx-ssl)     cmd_nginx_ssl "$@" ;;
-  certbot)       cmd_certbot "$@" ;;
-  deploy)        cmd_deploy ;;
-  status)        cmd_status ;;
-  -h|--help|help|"") usage ;;
+  all|deploy|"")   cmd_all ;;
+  init)            cmd_init ;;
+  secret)          cmd_secret ;;
+  up)              cmd_up ;;
+  down)            cmd_down ;;
+  restart)         cmd_restart ;;
+  rebuild)         cmd_rebuild ;;
+  ps)              cmd_ps ;;
+  logs)            cmd_logs "$@" ;;
+  health)          cmd_health ;;
+  status)          cmd_status ;;
+  shell)           cmd_shell ;;
+  migrate)         cmd_migrate ;;
+  create-user)     cmd_create_user ;;
+  newsletters)     cmd_newsletters ;;
+  nginx-http)      cmd_nginx_http "$@" ;;
+  nginx-ssl)       cmd_nginx_ssl "$@" ;;
+  certbot)         cmd_certbot "$@" ;;
+  -h|--help|help)  load_vars; usage ;;
   *)
     echo "Unknown command: $cmd"
-    echo
     usage
     exit 1
     ;;

@@ -2,7 +2,23 @@
 
 This app ships as a **Flask + Gunicorn + PostgreSQL** stack behind **nginx** on a VPS.
 
-Config files live in `deploy/nginx/`.
+Use **`./deployment.sh`** for day-to-day deploy commands. Config files live in `deploy/nginx/`.
+
+```bash
+chmod +x deployment.sh
+./deployment.sh init          # create .env
+./deployment.sh secret        # generate SECRET_KEY
+# edit .env → SECRET_KEY, POSTGRES_PASSWORD, HOST_PORT=8002
+./deployment.sh deploy        # build, start, wait for health
+./deployment.sh create-user
+./deployment.sh nginx-http    # almanac.africa
+./deployment.sh certbot       # TLS for almanac.africa + www
+./deployment.sh nginx-ssl
+```
+
+Domain: **almanac.africa** (and `www.almanac.africa`).
+
+Run `./deployment.sh help` for the full command list.
 
 ---
 

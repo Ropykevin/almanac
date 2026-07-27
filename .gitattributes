@@ -1,3 +1,4 @@
-# Keep shell scripts LF so Docker ENTRYPOINT works on Linux hosts
+# Keep shell scripts LF so they run on Linux VPS / Docker
 docker-entrypoint.sh text eol=lf
+deployment.sh text eol=lf
 *.sh text eol=lf

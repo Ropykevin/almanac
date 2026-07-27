@@ -328,12 +328,14 @@ npm run build:css
 
 ## Docker (full stack)
 
-See **[DEPLOY.md](DEPLOY.md)** for the VPS path: Docker Compose + **nginx** + Let’s Encrypt.
+See **[DEPLOY.md](DEPLOY.md)** for the VPS path. Day-to-day commands:
 
 ```bash
-copy .env.example .env
-# Set SECRET_KEY and POSTGRES_PASSWORD, then:
-docker compose up --build -d
+chmod +x deployment.sh
+./deployment.sh deploy
+./deployment.sh create-user
+./deployment.sh nginx-http yourdomain.com
+./deployment.sh certbot yourdomain.com
 ```
 
 - App (Gunicorn): `127.0.0.1:8000` (proxied by nginx on 80/443)

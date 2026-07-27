@@ -1,15 +1,8 @@
 <footer class="public-footer mt-16 border-t border-stone-200/80">
   <div class="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.45fr_1fr_1fr]">
     <div>
-      <a href="{{ url_for('main.index') }}" class="inline-flex items-center gap-3">
-        <img
-          src="{{ url_for('static', filename='logo.jpg') }}"
-          alt=""
-          class="h-10 w-auto max-w-[180px] object-contain object-left"
-          width="180"
-          height="40"
-        >
-        <span class="font-display text-xl font-semibold tracking-tight text-ink-900 sm:text-2xl">
+      <a href="{{ url_for('main.index') }}" class="inline-block">
+        <span class="font-display text-xl font-semibold tracking-tight text-ink-900 sm:text-2xl" style="color: var(--brand-primary)">
           {{ site.name if site else config.APP_NAME }}
         </span>
       </a>

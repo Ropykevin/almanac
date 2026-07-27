@@ -1,15 +1,8 @@
 <header class="public-nav sticky top-0 z-40 border-b border-stone-200/70 backdrop-blur-md" data-public-nav>
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
-    <a href="{{ url_for('main.index') }}" class="group flex min-w-0 items-center gap-2.5 sm:gap-3">
-      <img
-        src="{{ url_for('static', filename='logo.jpg') }}"
-        alt=""
-        class="h-9 w-auto max-w-[min(42vw,160px)] object-contain object-left sm:h-10 sm:max-w-[200px]"
-        width="200"
-        height="40"
-      >
+    <a href="{{ url_for('main.index') }}" class="group flex min-w-0 items-center">
       <span
-        class="truncate font-sans text-base font-semibold tracking-tight text-ink-900 transition group-hover:opacity-80 sm:text-lg">
+        class="truncate font-sans text-lg font-semibold tracking-tight text-ink-900 transition group-hover:opacity-80 sm:text-xl">
         {{ site.name if site else config.APP_NAME }}
       </span>
     </a>

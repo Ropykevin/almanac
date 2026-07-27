@@ -175,7 +175,6 @@ class ProductionConfig(Config):
             )
         app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_database_url(db_uri)
 
-        # Trust X-Forwarded-* when behind a reverse proxy / load balancer.
         if _env("PROXY_FIX", "1") in {"1", "true", "True", "yes"}:
             from werkzeug.middleware.proxy_fix import ProxyFix
 

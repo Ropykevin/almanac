@@ -182,6 +182,8 @@ Crontab every 5 minutes:
 - Cookies are `Secure` + `HttpOnly` + `SameSite=Lax` in production.
 - Uploads max **16 MB** (`client_max_body_size` matches Flask).
 - Prefer Redis for `RATELIMIT_STORAGE_URI` with multiple Gunicorn workers across hosts.
+  Docker Compose includes a `redis` service and defaults to `redis://redis:6379/0`.
+  Local `flask run` can keep `memory://`.
 
 ---
 

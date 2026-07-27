@@ -21,9 +21,22 @@ services:
       timeout: 5s
       retries: 12
       start_period: 10s
-    # Do not publish 5432 publicly — only the web container needs DB.
-    # ports:
-    #   - "127.0.0.1:5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: almanac-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - almanac
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   web:
     build: .
@@ -32,12 +45,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       FLASK_APP: wsgi.py
       FLASK_CONFIG: production
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
-      # Discrete DB parts — entrypoint builds DATABASE_URL (URL-encodes password).
-      # Do NOT set DATABASE_URL to localhost in .env for Docker; it is ignored here.
       DB_HOST: db
       DB_PORT: "5432"
       POSTGRES_USER: ${POSTGRES_USER:-almanac}
@@ -46,9 +59,9 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_TO_STDOUT: "1"
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
-      # Always listen on 8000 *inside* the container. Map a free host port with HOST_PORT.
       GUNICORN_BIND: "0.0.0.0:8002"
-      RATELIMIT_STORAGE_URI: ${RATELIMIT_STORAGE_URI:-memory://}
+      # Shared across Gunicorn workers (required when WEB_CONCURRENCY > 1)
+      RATELIMIT_STORAGE_URI: ${RATELIMIT_STORAGE_URI:-redis://redis:6379/0}
       PREFERRED_URL_SCHEME: https
       PROXY_FIX: ${PROXY_FIX:-1}
       MAIL_SERVER: ${MAIL_SERVER:-}
@@ -79,3 +92,4 @@ volumes:
   postgres_data:
   media_uploads:
   app_logs:
+  redis_data:

@@ -48,11 +48,17 @@ class Config:
     SESSION_COOKIE_NAME = "liminal_session"
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 24 * 7  # 7 days
 
-    # Rate limiting (Flask-Limiter)
+    # Rate limiting (Flask-Limiter) — use Redis when running multiple workers
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URI = _env("RATELIMIT_STORAGE_URI", "memory://")
     RATELIMIT_HEADERS_ENABLED = True
     RATELIMIT_DEFAULT = None
+    RATELIMIT_SWALLOW_ERRORS = _env("RATELIMIT_SWALLOW_ERRORS", "0") in {
+        "1",
+        "true",
+        "True",
+        "yes",
+    }
 
     # Password reset tokens (seconds)
     PASSWORD_RESET_MAX_AGE = int(_env("PASSWORD_RESET_MAX_AGE", "3600"))

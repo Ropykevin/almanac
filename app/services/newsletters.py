@@ -215,8 +215,8 @@ def build_campaign_html(
         image_url = None
         eyebrow = "Newsletter"
 
-    # Keep editor HTML, but strip dangerous tags for email body blocks
-    if body_html and article is not None and custom_html is None:
+    # Always sanitize email HTML (article content or custom campaign body).
+    if body_html:
         body_html = sanitize_article_html(body_html) or ""
 
     return render_template(
@@ -291,7 +291,8 @@ def save_newsletter_from_form(form, *, newsletter: Newsletter | None = None) -> 
         raise NewsletterError("Selected article was not found.")
 
     subject = form.subject.data.strip()
-    custom_html = (form.html_content.data or "").strip() or None
+    raw_html = (form.html_content.data or "").strip() or None
+    custom_html = sanitize_article_html(raw_html) if raw_html else None
 
     if newsletter is None:
         newsletter = Newsletter(

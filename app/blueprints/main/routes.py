@@ -247,6 +247,7 @@ def projects():
 @main_bp.route("/projects/<slug>")
 def project_detail(slug: str):
     from app.services import projects as project_service
+    from app.utils.html_sanitize import sanitize_article_html
 
     project = project_service.get_published_project_by_slug(slug)
     if project is None:
@@ -254,6 +255,7 @@ def project_detail(slug: str):
     return render_template(
         "main/project_detail.html",
         project=project,
+        project_body_html=sanitize_article_html(project.body),
         active_nav="projects",
         seo=seo_service.default_seo_context(
             title=project.title,
@@ -352,9 +354,12 @@ def newsletter_detail(newsletter_id: str):
         return redirect(
             url_for("main.article_detail", slug=newsletter.article.slug)
         )
+    from app.utils.html_sanitize import sanitize_article_html
+
     return render_template(
         "main/newsletter_detail.html",
         newsletter=newsletter,
+        newsletter_body_html=sanitize_article_html(newsletter.html_content),
         active_nav="subscribe",
         seo=seo_service.default_seo_context(
             title=newsletter.subject,

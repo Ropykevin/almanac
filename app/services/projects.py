@@ -12,6 +12,7 @@ from app.models.enums import ProjectStatus
 from app.services.publications import get_or_create_default_publication
 from app.utils.activity import log_activity
 from app.utils.slug import unique_project_slug
+from app.utils.html_sanitize import sanitize_article_html
 
 
 class ProjectError(ValueError):
@@ -109,7 +110,7 @@ def save_project_from_form(form, *, project: Project | None = None) -> Project:
         exclude_id=None if created else project.id,
     )
     project.description = description
-    project.body = body
+    project.body = sanitize_article_html(body) if body else None
     project.status = status
     project.sort_order = sort_order
     project.is_published = bool(form.is_published.data)

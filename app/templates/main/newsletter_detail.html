@@ -15,9 +15,9 @@
     </p>
   {% endif %}
 
-  {% if newsletter.html_content %}
+  {% if newsletter_body_html %}
     <div class="prose-article reveal-on-scroll mt-10">
-      {{ newsletter.html_content|safe }}
+      {{ newsletter_body_html|safe }}
     </div>
   {% else %}
     <p class="reveal-on-scroll mt-10 text-stone-600">

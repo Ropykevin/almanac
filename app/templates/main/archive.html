@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+  <header class="reveal-on-scroll max-w-2xl">
+    <p class="page-kicker">Blog</p>
+    <h1 class="public-section-title mt-3 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
+      The collection
+    </h1>
+    <p class="mt-4 text-base leading-relaxed text-stone-600 sm:text-lg">
+      Browse published essays and reports. Search by keyword or filter by category.
+    </p>
+  </header>
+
+  <form method="get" action="{{ url_for('main.archive') }}" class="reveal-on-scroll mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row">
+    {% if current_category %}
+      <input type="hidden" name="category" value="{{ current_category }}">
+    {% endif %}
+    {% if current_tag %}
+      <input type="hidden" name="tag" value="{{ current_tag }}">
+    {% endif %}
+    <label class="sr-only" for="blog-search-q">Search by keyword</label>
+    <input
+      id="blog-search-q"
+      type="search"
+      name="q"
+      value="{{ current_query }}"
+      placeholder="Search by keyword…"
+      class="w-full rounded-md border border-stone-300 bg-white/90 px-4 py-3 text-stone-900 outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-primary)_20%,transparent)]"
+    >
+    <button type="submit" class="btn-primary shrink-0">Search</button>
+  </form>
+
+  {% if categories %}
+    <div class="reveal-on-scroll mt-8 flex flex-wrap gap-2">
+      <a
+        href="{{ url_for('main.archive', q=current_query or None) }}"
+        class="filter-chip {% if not current_category %}is-active{% endif %}"
+      >
+        All
+      </a>
+      {% for category in categories %}
+        <a
+          href="{{ url_for('main.archive', category=category.slug, q=current_query or None) }}"
+          class="filter-chip {% if current_category == category.slug %}is-active{% endif %}"
+        >
+          {{ category.name }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <p class="reveal-on-scroll mt-6 text-sm text-stone-500">
+    {{ total }} article{% if total != 1 %}s{% endif %}
+    {% if current_query %} matching “{{ current_query }}”{% endif %}
+  </p>
+
+  {% if articles %}
+    <div class="mt-8 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+      {% for article in articles %}
+        <div class="reveal-on-scroll">
+          {% include "partials/article_teaser.html" %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if total_pages > 1 %}
+      <nav class="reveal-on-scroll mt-12 flex items-center justify-between border-t border-stone-300/80 pt-6 text-sm" aria-label="Pagination">
+        {% if page > 1 %}
+          <a class="font-medium underline underline-offset-4" style="color: var(--brand-primary)" href="{{ url_for('main.archive', page=page-1, category=current_category, tag=current_tag, q=current_query or None) }}">Previous</a>
+        {% else %}
+          <span></span>
+        {% endif %}
+        <span class="text-stone-500">Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a class="font-medium underline underline-offset-4" style="color: var(--brand-primary)" href="{{ url_for('main.archive', page=page+1, category=current_category, tag=current_tag, q=current_query or None) }}">Next</a>
+        {% else %}
+          <span></span>
+        {% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="reveal-on-scroll mt-14 max-w-lg">
+      {% if current_query %}
+        <p class="font-display text-2xl text-ink-900">No articles match “{{ current_query }}”.</p>
+        <p class="mt-2 text-stone-600">Try another keyword, or <a href="{{ url_for('main.archive', category=current_category) }}" class="underline" style="color: var(--brand-primary)">clear the search</a>.</p>
+      {% else %}
+        <p class="font-display text-2xl text-ink-900">No published articles in this view yet.</p>
+        <p class="mt-2 text-stone-600">Try another category, or check back after the next dispatch.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

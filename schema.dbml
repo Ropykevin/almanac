@@ -1,0 +1,271 @@
+// Liminal AI Africa — approved schema (from laminal.pdf)
+// Implemented in app/models and migrations/versions/20260716_0001_*.py
+
+Project liminal_ai_africa {
+  database_type: 'PostgreSQL'
+}
+
+Enum user_role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+Enum article_status {
+  DRAFT
+  REVIEW
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+Enum subscriber_status {
+  PENDING
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+Enum newsletter_status {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+}
+
+Enum delivery_status {
+  PENDING
+  SENT
+  OPENED
+  CLICKED
+  FAILED
+}
+
+Table users {
+  id uuid [pk]
+  full_name varchar(150) [not null]
+  email varchar(150) [not null, unique]
+  password_hash text [not null]
+  role user_role [not null]
+  bio text
+  avatar_id uuid [ref: > media.id]
+  is_active boolean [not null]
+  email_verified boolean [not null]
+  last_login timestamp
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table publications {
+  id uuid [pk]
+  name varchar(150) [not null]
+  slug varchar(150) [not null, unique]
+  description text
+  logo_id uuid [ref: > media.id]
+  banner_id uuid [ref: > media.id]
+  primary_color varchar(20)
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table publication_users {
+  publication_id uuid [pk, ref: > publications.id]
+  user_id uuid [pk, ref: > users.id]
+  role varchar(50) [not null]
+  created_at timestamp [not null]
+}
+
+Table media {
+  id uuid [pk]
+  uploaded_by uuid [not null, ref: > users.id]
+  file_name varchar(255) [not null]
+  original_name varchar(255) [not null]
+  mime_type varchar(100) [not null]
+  size bigint [not null]
+  path text [not null]
+  alt_text text
+  created_at timestamp [not null]
+}
+
+Table categories {
+  id uuid [pk]
+  publication_id uuid [not null, ref: > publications.id]
+  name varchar(100) [not null]
+  slug varchar(120) [not null]
+  description text
+  created_at timestamp [not null]
+
+  indexes {
+    (publication_id, slug) [unique]
+  }
+}
+
+Table tags {
+  id uuid [pk]
+  publication_id uuid [not null, ref: > publications.id]
+  name varchar(100) [not null]
+  slug varchar(100) [not null]
+
+  indexes {
+    (publication_id, slug) [unique]
+  }
+}
+
+Table articles {
+  id uuid [pk]
+  publication_id uuid [not null, ref: > publications.id]
+  author_id uuid [not null, ref: > users.id]
+  title varchar(255) [not null]
+  slug varchar(255) [not null]
+  subtitle text
+  excerpt text
+  content text
+  featured_image uuid [ref: > media.id]
+  reading_time integer
+  featured boolean [not null]
+  allow_comments boolean [not null]
+  status article_status [not null]
+  seo_title varchar(255)
+  seo_description text
+  canonical_url text
+  published_at timestamp
+  scheduled_at timestamp
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (publication_id, slug) [unique]
+  }
+}
+
+Table article_tags {
+  article_id uuid [pk, ref: > articles.id]
+  tag_id uuid [pk, ref: > tags.id]
+}
+
+Table article_categories {
+  article_id uuid [pk, ref: > articles.id]
+  category_id uuid [pk, ref: > categories.id]
+}
+
+Table subscribers {
+  id uuid [pk]
+  publication_id uuid [not null, ref: > publications.id]
+  full_name varchar(150)
+  email varchar(150) [not null]
+  verification_token text
+  status subscriber_status [not null]
+  subscribed_at timestamp
+  unsubscribed_at timestamp
+
+  indexes {
+    (publication_id, email) [unique]
+  }
+}
+
+Table newsletters {
+  id uuid [pk]
+  publication_id uuid [not null, ref: > publications.id]
+  article_id uuid [ref: > articles.id]
+  subject varchar(255) [not null]
+  html_content text
+  status newsletter_status [not null]
+  scheduled_at timestamp
+  sent_at timestamp
+  created_at timestamp [not null]
+}
+
+Table newsletter_deliveries {
+  id uuid [pk]
+  newsletter_id uuid [not null, ref: > newsletters.id]
+  subscriber_id uuid [not null, ref: > subscribers.id]
+  status delivery_status [not null]
+  sent_at timestamp
+  opened_at timestamp
+  clicked_at timestamp
+
+  indexes {
+    (newsletter_id, subscriber_id) [unique]
+  }
+}
+
+Table comments {
+  id uuid [pk]
+  article_id uuid [not null, ref: > articles.id]
+  full_name varchar(150) [not null]
+  email varchar(150) [not null]
+  comment text [not null]
+  approved boolean [not null]
+  created_at timestamp [not null]
+}
+
+Table article_likes {
+  id uuid [pk]
+  article_id uuid [not null, ref: > articles.id]
+  visitor_key varchar(64) [not null]
+  created_at timestamp [not null]
+
+  indexes {
+    (article_id, visitor_key) [unique]
+  }
+}
+
+Table article_views {
+  id uuid [pk]
+  article_id uuid [not null, ref: > articles.id]
+  ip_address varchar(100)
+  country varchar(100)
+  browser varchar(100)
+  viewed_at timestamp [not null]
+}
+
+Table article_revisions {
+  id uuid [pk]
+  article_id uuid [not null, ref: > articles.id]
+  editor_id uuid [not null, ref: > users.id]
+  revision_number integer [not null]
+  title varchar(255) [not null]
+  content text
+  created_at timestamp [not null]
+
+  indexes {
+    (article_id, revision_number) [unique]
+  }
+}
+
+Table activity_logs {
+  id uuid [pk]
+  user_id uuid [ref: > users.id]
+  action varchar(150) [not null]
+  description text
+  ip_address varchar(100)
+  created_at timestamp [not null]
+}
+
+Table settings {
+  id uuid [pk]
+  publication_id uuid [not null, ref: > publications.id]
+  setting_key varchar(150) [not null]
+  setting_value text
+
+  indexes {
+    (publication_id, setting_key) [unique]
+  }
+}
+
+Enum project_status {
+  LIVE
+  COMING_SOON
+}
+
+Table projects {
+  id uuid [pk]
+  publication_id uuid [not null, ref: > publications.id]
+  title varchar(255) [not null]
+  description text [not null]
+  status project_status [not null]
+  sort_order integer [not null]
+  is_published boolean [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}

@@ -1,0 +1,39 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}{{ page_title }} — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="mx-auto max-w-2xl space-y-6">
+  <p class="text-sm text-stone-500">
+    Choose a published article to feature, or write a custom HTML body for the email template.
+  </p>
+
+  <form method="post" novalidate class="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {{ form.hidden_tag() }}
+
+    <div class="space-y-1.5">
+      {{ form.subject.label(class="block text-sm font-medium text-stone-700") }}
+      {{ form.subject(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+      {% for error in form.subject.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="space-y-1.5">
+      {{ form.article_id.label(class="block text-sm font-medium text-stone-700") }}
+      {{ form.article_id(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+    </div>
+
+    <div class="space-y-1.5">
+      {{ form.html_content.label(class="block text-sm font-medium text-stone-700") }}
+      {{ form.html_content(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 font-mono text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+      <p class="text-xs text-stone-500">Optional override for the email body block. Article content is used when empty.</p>
+    </div>
+
+    <div class="flex flex-wrap gap-3 pt-2">
+      {{ form.submit(class="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800") }}
+      <a href="{{ url_for('admin.newsletter_list') }}" class="rounded-lg border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-700 hover:border-stone-300">
+        Cancel
+      </a>
+    </div>
+  </form>
+</section>
+{% endblock %}

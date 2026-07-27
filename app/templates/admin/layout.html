@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="min-h-screen bg-[#f4f6f5] text-stone-900" data-admin-shell>
+  {# Mobile sidebar overlay #}
+  <div
+    id="admin-sidebar-backdrop"
+    class="fixed inset-0 z-40 hidden bg-stone-900/40 lg:hidden"
+    aria-hidden="true"
+  ></div>
+
+  <div class="lg:flex lg:min-h-screen">
+    {% include "admin/partials/sidebar.html" %}
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      {% include "admin/partials/topbar.html" %}
+
+      <main class="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        {% include "admin/partials/breadcrumbs.html" %}
+        {% include "partials/flash.html" %}
+        {% block admin_content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+{% endblock %}

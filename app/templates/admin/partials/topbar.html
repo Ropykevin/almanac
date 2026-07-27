@@ -1,0 +1,42 @@
+<header class="sticky top-0 z-30 border-b border-stone-200/80 bg-[#f4f6f5]/95 backdrop-blur">
+  <div class="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        id="admin-sidebar-toggle"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-stone-200 bg-white text-stone-700 shadow-sm transition hover:bg-stone-50 lg:hidden"
+        aria-controls="admin-sidebar"
+        aria-expanded="false"
+        aria-label="Open navigation"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+      <div>
+        <p class="text-xs font-medium uppercase tracking-[0.14em] text-stone-500">Workspace</p>
+        <h1 class="font-display text-lg font-semibold tracking-tight text-brand-900 sm:text-xl">
+          {{ page_title|default('Dashboard') }}
+        </h1>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <a
+        href="{{ url_for('main.index') }}"
+        class="hidden rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700 shadow-sm transition hover:border-stone-300 hover:bg-stone-50 sm:inline-flex"
+      >
+        View site
+      </a>
+      <form action="{{ url_for('auth.logout') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button
+          type="submit"
+          class="inline-flex items-center rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+        >
+          Sign out
+        </button>
+      </form>
+    </div>
+  </div>
+</header>

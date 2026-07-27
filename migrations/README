@@ -1,0 +1,6 @@
+Single-database configuration for Flask-Migrate / Alembic.
+
+Initialize or upgrade with:
+
+    flask db migrate -m "message"
+    flask db upgrade

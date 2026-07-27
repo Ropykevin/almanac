@@ -1,0 +1,118 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Media — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <p class="text-sm text-stone-500">Upload, preview, and reuse images, PDFs, and documents.</p>
+    <a href="{{ url_for('admin.media_upload') }}" class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+      Upload file
+    </a>
+  </div>
+
+  {% set kinds = [
+    ("all", "All"),
+    ("image", "Images"),
+    ("pdf", "PDFs"),
+    ("document", "Documents"),
+  ] %}
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap gap-2">
+      {% for key, label in kinds %}
+        <a
+          href="{{ url_for('admin.media_list', kind=key, q=page_data.q) }}"
+          class="inline-flex rounded-lg border px-3 py-1.5 text-sm transition
+            {% if page_data.kind == key %}
+              border-brand-700 bg-brand-700 text-white
+            {% else %}
+              border-stone-200 bg-white text-stone-700 hover:border-stone-300
+            {% endif %}"
+        >
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+    <form method="get" class="ml-auto flex gap-2">
+      {% if page_data.kind and page_data.kind != 'all' %}
+        <input type="hidden" name="kind" value="{{ page_data.kind }}">
+      {% endif %}
+      <input
+        type="search"
+        name="q"
+        value="{{ page_data.q }}"
+        placeholder="Search files"
+        class="w-56 rounded-lg border border-stone-200 px-3 py-1.5 text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15"
+      >
+      <button type="submit" class="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:border-stone-300">
+        Search
+      </button>
+    </form>
+  </div>
+
+  {% if page_data.items %}
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {% for item in page_data.items %}
+        {% set kind = 'image' if item.mime_type.startswith('image/') else ('pdf' if item.mime_type == 'application/pdf' or item.file_name.lower().endswith('.pdf') else 'document') %}
+        <a
+          href="{{ url_for('admin.media_detail', media_id=item.id) }}"
+          class="group overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-brand-300"
+        >
+          <div class="flex aspect-[4/3] items-center justify-center bg-stone-50">
+            {% if kind == 'image' %}
+              <img
+                src="{{ url_for('static', filename=item.path) }}"
+                alt="{{ item.alt_text or item.original_name }}"
+                class="h-full w-full object-cover"
+                loading="lazy"
+              >
+            {% else %}
+              <div class="px-4 text-center">
+                <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">{{ kind }}</p>
+                <p class="mt-2 line-clamp-2 text-sm font-medium text-stone-800">{{ item.original_name }}</p>
+              </div>
+            {% endif %}
+          </div>
+          <div class="space-y-1 px-4 py-3">
+            <p class="truncate text-sm font-medium text-stone-900 group-hover:text-brand-800">{{ item.original_name }}</p>
+            <p class="text-xs text-stone-500">
+              {% if item.size < 1024 %}{{ item.size }} B{% elif item.size < 1048576 %}{{ '%.1f'|format(item.size / 1024) }} KB{% else %}{{ '%.1f'|format(item.size / 1048576) }} MB{% endif %}
+              · {{ item.created_at.strftime("%Y-%m-%d") if item.created_at else "—" }}
+            </p>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+
+    {% if page_data.pages > 1 %}
+      <nav class="flex items-center justify-between gap-3 pt-2" aria-label="Pagination">
+        <p class="text-sm text-stone-500">
+          Page {{ page_data.page }} of {{ page_data.pages }} · {{ page_data.total }} files
+        </p>
+        <div class="flex gap-2">
+          {% if page_data.has_prev %}
+            <a
+              href="{{ url_for('admin.media_list', page=page_data.page - 1, kind=page_data.kind, q=page_data.q) }}"
+              class="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:border-stone-300"
+            >Previous</a>
+          {% endif %}
+          {% if page_data.has_next %}
+            <a
+              href="{{ url_for('admin.media_list', page=page_data.page + 1, kind=page_data.kind, q=page_data.q) }}"
+              class="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:border-stone-300"
+            >Next</a>
+          {% endif %}
+        </div>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="rounded-2xl border border-stone-200/90 bg-white px-5 py-14 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <h3 class="font-display text-lg font-semibold text-stone-900">No media yet</h3>
+      <p class="mt-1 text-sm text-stone-500">Upload images, PDFs, or documents to reuse across articles.</p>
+      <a href="{{ url_for('admin.media_upload') }}" class="mt-5 inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+        Upload file
+      </a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

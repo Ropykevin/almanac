@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="relative overflow-hidden">
+  <div
+    class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--brand-primary)_14%,transparent),transparent_50%)]">
+  </div>
+  <div class="relative mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+    <p class="page-kicker reveal-on-scroll">About</p>
+    <h1
+      class="public-section-title reveal-on-scroll mt-3 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
+      {{ site.name if site else config.APP_NAME }}
+    </h1>
+    <p class="reveal-on-scroll mt-6 font-display text-2xl leading-snug text-stone-700 sm:text-3xl">
+      {% if site and site.tagline %}
+      {{ site.tagline }}
+      {% else %}
+      A journal for the age of African intelligence.
+      {% endif %}
+    </p>
+
+    <div class="prose-article reveal-on-scroll mt-10">
+      {% if site and site.description %}
+      <p>{{ site.description }}</p>
+      {% endif %}
+      <p>
+        We publish rigorous, elegant reporting on artificial intelligence as it takes root across African cities,
+        laboratories, studios, and governments. Our writers chase the human stakes behind the systems —
+        power, labor, language, imagination.
+      </p>
+      <p>
+        {{ site.name if site else config.APP_NAME }} marks the threshold: between research and lived experience, between optimism and scrutiny,
+        between the local and the planetary. We believe readers deserve depth without jargon, and beauty without fluff.
+      </p>
+      <h2>What we cover</h2>
+      <ul>
+        <li>AI policy, infrastructure, and public interest technology</li>
+        <li>Creative and cultural experiments with machine systems</li>
+        <li>Builders, researchers, and communities shaping the field</li>
+      </ul>
+      <h2>How we publish</h2>
+      <p>
+        Every piece is edited for clarity and paced for reading — with estimated reading time, careful typography,
+        and a calm reading environment free of clutter.
+      </p>
+    </div>
+
+    <div class="reveal-on-scroll mt-12 flex flex-wrap gap-3">
+      <a href="{{ url_for('main.archive') }}" class="btn-primary">Read the blog</a>
+      <a href="{{ url_for('main.subscribe') }}" class="btn-outline">Newsletter</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Categories — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <p class="text-sm text-stone-500">Organize articles into publication categories.</p>
+    <a href="{{ url_for('admin.category_create') }}" class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+      New category
+    </a>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if categories %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">Name</th>
+              <th class="px-5 py-3 font-medium">Slug</th>
+              <th class="px-5 py-3 font-medium">Articles</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for category in categories %}
+              <tr class="hover:bg-stone-50/70">
+                <td class="px-5 py-4">
+                  <p class="font-medium text-stone-900">{{ category.name }}</p>
+                  {% if category.description %}
+                    <p class="mt-0.5 line-clamp-1 text-xs text-stone-500">{{ category.description }}</p>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4 font-mono text-xs text-stone-500">{{ category.slug }}</td>
+                <td class="px-5 py-4 text-stone-600">{{ category.articles|length }}</td>
+                <td class="px-5 py-4">
+                  <div class="flex justify-end gap-3">
+                    <a href="{{ url_for('admin.category_edit', category_id=category.id) }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">Edit</a>
+                    <form method="post" action="{{ url_for('admin.category_delete', category_id=category.id) }}" onsubmit="return confirm('Delete this category?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="text-sm font-medium text-rose-600 hover:text-rose-700">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="px-5 py-14 text-center">
+        <h3 class="font-display text-lg font-semibold text-stone-900">No categories yet</h3>
+        <p class="mt-1 text-sm text-stone-500">Create categories to group related articles.</p>
+        <a href="{{ url_for('admin.category_create') }}" class="mt-5 inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+          Create category
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

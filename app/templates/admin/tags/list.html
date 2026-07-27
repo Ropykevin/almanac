@@ -1,0 +1,57 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Tags — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <p class="text-sm text-stone-500">Label articles with reusable tags.</p>
+    <a href="{{ url_for('admin.tag_create') }}" class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+      New tag
+    </a>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if tags %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">Name</th>
+              <th class="px-5 py-3 font-medium">Slug</th>
+              <th class="px-5 py-3 font-medium">Articles</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for tag in tags %}
+              <tr class="hover:bg-stone-50/70">
+                <td class="px-5 py-4 font-medium text-stone-900">{{ tag.name }}</td>
+                <td class="px-5 py-4 font-mono text-xs text-stone-500">{{ tag.slug }}</td>
+                <td class="px-5 py-4 text-stone-600">{{ tag.articles|length }}</td>
+                <td class="px-5 py-4">
+                  <div class="flex justify-end gap-3">
+                    <a href="{{ url_for('admin.tag_edit', tag_id=tag.id) }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">Edit</a>
+                    <form method="post" action="{{ url_for('admin.tag_delete', tag_id=tag.id) }}" onsubmit="return confirm('Delete this tag?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="text-sm font-medium text-rose-600 hover:text-rose-700">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="px-5 py-14 text-center">
+        <h3 class="font-display text-lg font-semibold text-stone-900">No tags yet</h3>
+        <p class="mt-1 text-sm text-stone-500">Create tags to help readers discover related stories.</p>
+        <a href="{{ url_for('admin.tag_create') }}" class="mt-5 inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+          Create tag
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

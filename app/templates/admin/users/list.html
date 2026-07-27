@@ -1,0 +1,146 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Users — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <p class="text-sm text-stone-500">
+      Create and manage Admins, Editors, and Super Admins. Deactivate accounts instead of deleting them.
+    </p>
+    <a
+      href="{{ url_for('admin.user_create') }}"
+      class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
+    >
+      Add user
+    </a>
+  </div>
+
+  {% set role_filters = [
+    ("ALL", "All", counts.ALL),
+    ("SUPER_ADMIN", "Super Admin", counts.SUPER_ADMIN),
+    ("ADMIN", "Admin", counts.ADMIN),
+    ("EDITOR", "Editor", counts.EDITOR),
+  ] %}
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap gap-2">
+      {% for key, label, count in role_filters %}
+        <a
+          href="{{ url_for('admin.user_list', role=key, status=current_status, q=q) }}"
+          class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition
+            {% if current_role == key %}
+              border-brand-700 bg-brand-700 text-white
+            {% else %}
+              border-stone-200 bg-white text-stone-700 hover:border-stone-300
+            {% endif %}"
+        >
+          {{ label }}
+          <span class="rounded {% if current_role == key %}bg-white/20{% else %}bg-stone-100{% endif %} px-1.5 py-0.5 text-xs">
+            {{ count }}
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+    <form method="get" class="ml-auto flex flex-wrap gap-2">
+      {% if current_role and current_role != 'ALL' %}
+        <input type="hidden" name="role" value="{{ current_role }}">
+      {% endif %}
+      <select
+        name="status"
+        class="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-700"
+      >
+        <option value="all" {% if current_status == 'all' %}selected{% endif %}>All statuses</option>
+        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+      <input
+        type="search"
+        name="q"
+        value="{{ q }}"
+        placeholder="Search name or email"
+        class="w-56 rounded-lg border border-stone-200 px-3 py-1.5 text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15"
+      >
+      <button type="submit" class="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:border-stone-300">
+        Search
+      </button>
+    </form>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if users %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">User</th>
+              <th class="px-5 py-3 font-medium">Role</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Last login</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for user in users %}
+              <tr>
+                <td class="px-5 py-4">
+                  <p class="font-medium text-stone-900">
+                    {{ user.full_name }}
+                    {% if user.id == current_user.id %}
+                      <span class="ml-1 text-xs font-normal text-stone-400">(you)</span>
+                    {% endif %}
+                  </p>
+                  <p class="text-xs text-stone-500">{{ user.email }}</p>
+                </td>
+                <td class="px-5 py-4 text-stone-700">{{ user.role_label }}</td>
+                <td class="px-5 py-4">
+                  {% if user.is_active %}
+                    <span class="inline-flex rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">Active</span>
+                  {% else %}
+                    <span class="inline-flex rounded-md bg-stone-100 px-2 py-1 text-xs font-medium text-stone-600">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4 text-stone-500">
+                  {% if user.last_login %}
+                    {{ user.last_login.strftime('%b %d, %Y %H:%M') }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex flex-wrap justify-end gap-2">
+                    <a
+                      href="{{ url_for('admin.user_edit', user_id=user.id) }}"
+                      class="rounded-md border border-stone-200 px-2.5 py-1 text-xs font-medium text-stone-700 hover:border-brand-700 hover:text-brand-800"
+                    >
+                      Edit
+                    </a>
+                    {% if user.is_active %}
+                      {% if user.id != current_user.id %}
+                        <form method="post" action="{{ url_for('admin.user_deactivate', user_id=user.id) }}" onsubmit="return confirm('Deactivate {{ user.email }}?');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit" class="rounded-md border border-rose-200 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50">
+                            Deactivate
+                          </button>
+                        </form>
+                      {% endif %}
+                    {% else %}
+                      <form method="post" action="{{ url_for('admin.user_activate', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="rounded-md border border-stone-200 px-2.5 py-1 text-xs font-medium text-stone-700 hover:border-stone-300">
+                          Activate
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="px-5 py-10 text-center text-sm text-stone-500">No users match this view.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

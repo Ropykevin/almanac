@@ -1,0 +1,125 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Articles — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm text-stone-500">Create, schedule, publish, and archive stories.</p>
+    </div>
+    <a
+      href="{{ url_for('admin.article_create') }}"
+      class="inline-flex items-center rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
+    >
+      New article
+    </a>
+  </div>
+
+  {% set filters = [
+    ("ALL", "All", counts.ALL),
+    ("DRAFT", "Drafts", counts.DRAFT),
+    ("SCHEDULED", "Scheduled", counts.SCHEDULED),
+    ("PUBLISHED", "Published", counts.PUBLISHED),
+    ("REVIEW", "In review", counts.REVIEW),
+    ("ARCHIVED", "Archived", counts.ARCHIVED),
+  ] %}
+  <div class="flex flex-wrap gap-2">
+    {% for key, label, count in filters %}
+      <a
+        href="{{ url_for('admin.article_list', status=key) }}"
+        class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition
+          {% if current_status == key %}
+            border-brand-700 bg-brand-700 text-white
+          {% else %}
+            border-stone-200 bg-white text-stone-700 hover:border-stone-300
+          {% endif %}"
+      >
+        {{ label }}
+        <span class="rounded {% if current_status == key %}bg-white/20{% else %}bg-stone-100{% endif %} px-1.5 py-0.5 text-xs">
+          {{ count }}
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if articles %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">Title</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Author</th>
+              <th class="px-5 py-3 font-medium">Updated</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for article in articles %}
+              <tr class="align-middle hover:bg-stone-50/70">
+                <td class="px-5 py-4">
+                  <a href="{{ url_for('admin.article_edit', article_id=article.id) }}" class="font-medium text-stone-900 hover:text-brand-700">
+                    {{ article.title }}
+                  </a>
+                  <p class="mt-0.5 text-xs text-stone-500">/{{ article.slug }}</p>
+                  {% if article.categories or article.tags %}
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                      {% for category in article.categories %}
+                        <span class="rounded border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[11px] font-medium text-teal-800">{{ category.name }}</span>
+                      {% endfor %}
+                      {% for tag in article.tags %}
+                        <span class="rounded border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[11px] font-medium text-stone-600">#{{ tag.name }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                  {% include "admin/articles/_status_badge.html" %}
+                </td>
+                <td class="px-5 py-4 text-stone-600">
+                  {{ article.author.full_name if article.author else "—" }}
+                </td>
+                <td class="whitespace-nowrap px-5 py-4 text-stone-500">
+                  {{ article.updated_at.strftime('%b %d, %Y') if article.updated_at else "—" }}
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex flex-wrap items-center justify-end gap-2">
+                    <a href="{{ url_for('admin.article_preview', article_id=article.id) }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">Preview</a>
+                    <a href="{{ url_for('admin.article_edit', article_id=article.id) }}" class="text-sm font-medium text-stone-700 hover:text-stone-900">Edit</a>
+                    {% if article.status.value != 'PUBLISHED' %}
+                      <form method="post" action="{{ url_for('admin.article_publish', article_id=article.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-sm font-medium text-emerald-700 hover:text-emerald-800">Publish</button>
+                      </form>
+                    {% endif %}
+                    {% if article.status.value != 'ARCHIVED' %}
+                      <form method="post" action="{{ url_for('admin.article_archive', article_id=article.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-sm font-medium text-stone-500 hover:text-stone-800">Archive</button>
+                      </form>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('admin.article_delete', article_id=article.id) }}" onsubmit="return confirm('Delete this article permanently?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="text-sm font-medium text-rose-600 hover:text-rose-700">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="px-5 py-14 text-center">
+        <h3 class="font-display text-lg font-semibold text-stone-900">No articles yet</h3>
+        <p class="mt-1 text-sm text-stone-500">Start with a draft — you can schedule or publish when ready.</p>
+        <a href="{{ url_for('admin.article_create') }}" class="mt-5 inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+          Create article
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

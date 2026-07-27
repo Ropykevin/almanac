@@ -1,0 +1,65 @@
+{% set nav_items = [
+  {"key": "dashboard", "label": "Dashboard", "href": url_for('admin.dashboard'), "icon": "grid"},
+  {"key": "analytics", "label": "Analytics", "href": url_for('admin.analytics_dashboard'), "icon": "chart"},
+  {"key": "articles", "label": "Articles", "href": url_for('admin.article_list'), "icon": "doc"},
+  {"key": "projects", "label": "Projects", "href": url_for('admin.project_list'), "icon": "folder"},
+  {"key": "users", "label": "Users", "href": url_for('admin.user_list'), "icon": "staff", "super_admin_only": true},
+  {"key": "comments", "label": "Comments", "href": url_for('admin.comment_list'), "icon": "chat"},
+  {"key": "categories", "label": "Categories", "href": url_for('admin.category_list'), "icon": "folder"},
+  {"key": "tags", "label": "Tags", "href": url_for('admin.tag_list'), "icon": "tag"},
+  {"key": "subscribers", "label": "Subscribers", "href": url_for('admin.subscriber_list'), "icon": "users"},
+  {"key": "newsletters", "label": "Newsletters", "href": url_for('admin.newsletter_list'), "icon": "mail"},
+  {"key": "media", "label": "Media", "href": url_for('admin.media_list'), "icon": "image"},
+  {"key": "settings", "label": "Settings", "href": url_for('admin.site_settings'), "icon": "gear"},
+] %}
+
+<aside
+  id="admin-sidebar"
+  class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-stone-200/80 bg-[#0f3d38] text-teal-50 transition-transform duration-200 lg:static lg:translate-x-0"
+  aria-label="Admin navigation"
+>
+  <div class="flex items-center gap-3 border-b border-white/10 px-5 py-5">
+    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-400/20 font-display text-sm font-bold text-teal-100">
+      L
+    </div>
+    <div class="min-w-0">
+      <p class="truncate font-display text-base font-semibold tracking-tight text-white">
+        {{ config.APP_NAME }}
+      </p>
+      <p class="text-xs text-teal-200/80">Admin console</p>
+    </div>
+  </div>
+
+  <nav class="flex-1 space-y-1 px-3 py-4">
+    {% for item in nav_items %}
+      {% if not item.get('super_admin_only') or current_user.has_role('SUPER_ADMIN') %}
+      {% set is_active = active_nav == item.key %}
+      <a
+        href="{{ item.href }}"
+        class="group flex items-center justify-between rounded-lg px-3 py-2.5 text-sm transition
+          {% if is_active %}
+            bg-white/10 font-medium text-white
+          {% else %}
+            text-teal-100/80 hover:bg-white/5 hover:text-white
+          {% endif %}"
+        {% if item.get('soon') %}aria-disabled="true" title="Coming soon"{% endif %}
+      >
+        <span class="flex items-center gap-3">
+          {% include "admin/partials/nav_icon.html" %}
+          {{ item.label }}
+        </span>
+        {% if item.get('soon') %}
+          <span class="rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-teal-100/70">Soon</span>
+        {% endif %}
+      </a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  <div class="border-t border-white/10 p-4">
+    <div class="rounded-lg bg-white/5 px-3 py-3">
+      <p class="truncate text-sm font-medium text-white">{{ current_user.full_name }}</p>
+      <p class="truncate text-xs text-teal-200/80">{{ current_user.role_label }}</p>
+    </div>
+  </div>
+</aside>

@@ -1,0 +1,146 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Subscribers — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <p class="text-sm text-stone-500">Manage newsletter subscriptions, verification, and exports.</p>
+    <div class="flex flex-wrap gap-2">
+      <a
+        href="{{ url_for('admin.subscriber_export', status=current_status, q=q) }}"
+        class="inline-flex rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 hover:border-stone-300"
+      >
+        Export CSV
+      </a>
+      <a
+        href="{{ url_for('admin.subscriber_import') }}"
+        class="inline-flex rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 hover:border-stone-300"
+      >
+        Import CSV
+      </a>
+      <a
+        href="{{ url_for('admin.subscriber_create') }}"
+        class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
+      >
+        Add subscriber
+      </a>
+    </div>
+  </div>
+
+  {% set filters = [
+    ("ALL", "All", counts.ALL),
+    ("PENDING", "Pending", counts.PENDING),
+    ("ACTIVE", "Active", counts.ACTIVE),
+    ("UNSUBSCRIBED", "Unsubscribed", counts.UNSUBSCRIBED),
+    ("BOUNCED", "Bounced", counts.BOUNCED),
+  ] %}
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap gap-2">
+      {% for key, label, count in filters %}
+        <a
+          href="{{ url_for('admin.subscriber_list', status=key, q=q) }}"
+          class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition
+            {% if current_status == key %}
+              border-brand-700 bg-brand-700 text-white
+            {% else %}
+              border-stone-200 bg-white text-stone-700 hover:border-stone-300
+            {% endif %}"
+        >
+          {{ label }}
+          <span class="rounded {% if current_status == key %}bg-white/20{% else %}bg-stone-100{% endif %} px-1.5 py-0.5 text-xs">
+            {{ count }}
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+    <form method="get" class="ml-auto flex gap-2">
+      {% if current_status and current_status != 'ALL' %}
+        <input type="hidden" name="status" value="{{ current_status }}">
+      {% endif %}
+      <input
+        type="search"
+        name="q"
+        value="{{ q }}"
+        placeholder="Search email or name"
+        class="w-56 rounded-lg border border-stone-200 px-3 py-1.5 text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15"
+      >
+      <button type="submit" class="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:border-stone-300">
+        Search
+      </button>
+    </form>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if subscribers %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">Subscriber</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Subscribed</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for subscriber in subscribers %}
+              <tr class="hover:bg-stone-50/70">
+                <td class="px-5 py-4">
+                  <p class="font-medium text-stone-900">{{ subscriber.email }}</p>
+                  {% if subscriber.full_name %}
+                    <p class="mt-0.5 text-xs text-stone-500">{{ subscriber.full_name }}</p>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                  {% set badge = {
+                    "PENDING": "bg-amber-50 text-amber-800 border-amber-100",
+                    "ACTIVE": "bg-teal-50 text-teal-800 border-teal-100",
+                    "UNSUBSCRIBED": "bg-stone-100 text-stone-600 border-stone-200",
+                    "BOUNCED": "bg-rose-50 text-rose-700 border-rose-100",
+                  } %}
+                  <span class="inline-flex rounded border px-2 py-0.5 text-xs font-medium {{ badge.get(subscriber.status.value, 'bg-stone-50 text-stone-600 border-stone-200') }}">
+                    {{ subscriber.status.value|title }}
+                  </span>
+                </td>
+                <td class="px-5 py-4 text-stone-600">
+                  {% if subscriber.subscribed_at %}
+                    {{ subscriber.subscribed_at.strftime("%Y-%m-%d") }}
+                  {% elif subscriber.unsubscribed_at %}
+                    <span class="text-stone-400">Unsub {{ subscriber.unsubscribed_at.strftime("%Y-%m-%d") }}</span>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex flex-wrap justify-end gap-3">
+                    <a href="{{ url_for('admin.subscriber_edit', subscriber_id=subscriber.id) }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">Edit</a>
+                    {% if subscriber.status.value != 'ACTIVE' %}
+                      <form method="post" action="{{ url_for('admin.subscriber_resend', subscriber_id=subscriber.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-sm font-medium text-stone-600 hover:text-stone-800">Resend</button>
+                      </form>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('admin.subscriber_delete', subscriber_id=subscriber.id) }}" onsubmit="return confirm('Delete this subscriber?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="text-sm font-medium text-rose-600 hover:text-rose-700">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="px-5 py-14 text-center">
+        <h3 class="font-display text-lg font-semibold text-stone-900">No subscribers yet</h3>
+        <p class="mt-1 text-sm text-stone-500">Public signups appear here after they confirm their email.</p>
+        <a href="{{ url_for('admin.subscriber_create') }}" class="mt-5 inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+          Add subscriber
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

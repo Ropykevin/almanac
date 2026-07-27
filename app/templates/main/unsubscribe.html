@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Unsubscribe — {{ site.name if site else config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden">
+  <div
+    class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--brand-primary)_12%,transparent)_0%,var(--paper)_48%,var(--paper)_100%)]">
+  </div>
+  <div class="relative mx-auto max-w-lg px-4 py-16 sm:px-6 lg:py-24">
+    <p class="page-kicker reveal-on-scroll">Newsletter</p>
+    <h1
+      class="public-section-title reveal-on-scroll mt-3 text-3xl font-semibold tracking-tight text-ink-900 sm:text-4xl">
+      Unsubscribe
+    </h1>
+    <p class="reveal-on-scroll mt-4 text-base leading-relaxed text-stone-600">
+      Enter the email address you used to subscribe. We’ll remove it from the list.
+    </p>
+
+    <div class="reveal-on-scroll mt-8 border border-stone-300/80 bg-white/80 p-6 backdrop-blur-sm sm:p-8">
+      <form method="post" novalidate class="space-y-5">
+        {{ form.hidden_tag() }}
+        <div class="space-y-1.5">
+          {{ form.email.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.email(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none
+          focus:border-[var(--brand-primary)] focus:ring-2
+          focus:ring-[color-mix(in_srgb,var(--brand-primary)_18%,transparent)]") }}
+          {% for error in form.email.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+        </div>
+        {{ form.submit(class="btn-primary w-full") }}
+      </form>
+    </div>
+
+    <p class="reveal-on-scroll mt-6 text-center text-sm text-stone-500">
+      Changed your mind?
+      <a href="{{ url_for('main.subscribe') }}" class="font-medium underline underline-offset-4"
+        style="color: var(--brand-primary)">Subscribe again</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

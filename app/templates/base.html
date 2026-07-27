@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% if seo is defined and seo %}{{ seo.page_title }}{% else %}{{ config.APP_NAME }}{% endif %}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{% if seo is defined and seo %}{{ seo.meta_description }}{% else %}African intelligence, reported with clarity — stories at the edge of technology, culture, and power.{% endif %}{% endblock %}">
+  <meta name="robots" content="{% block meta_robots %}index,follow{% endblock %}">
+  {% include "seo/_meta_tags.html" %}
+  {% set brand_color = (site.primary_color if site and site.primary_color else '#0f766e') %}
+  <style>
+    :root {
+      --brand-primary: {{ brand_color }};
+    }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              600: '#0d9488',
+              700: '{{ brand_color }}',
+              800: '{{ brand_color }}',
+              900: '{{ brand_color }}',
+            },
+            ink: {
+              950: '#0c1210',
+              900: '#14201c',
+              700: '#2f3d38',
+            }
+          },
+          fontFamily: {
+            display: ['"Source Serif 4"', 'Georgia', 'serif'],
+            sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/article-content.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="public-body min-h-screen font-sans text-ink-900 antialiased">
+  {% block body %}
+  {% include "partials/public_nav.html" %}
+
+  <div class="mx-auto max-w-6xl px-4 pt-3 sm:px-6">
+    {% include "partials/flash.html" %}
+  </div>
+
+  {% block content %}{% endblock %}
+
+  {% include "partials/public_footer.html" %}
+  {% endblock %}
+
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/public.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

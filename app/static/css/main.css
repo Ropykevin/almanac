@@ -1,0 +1,70 @@
+/* Compiled Tailwind output placeholder.
+ * Rebuild with: npm run build:css
+ * Watch with:   npm run watch:css
+ */
+
+*, ::before, ::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: #e7e5e4;
+}
+
+html {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+body {
+  margin: 0;
+  line-height: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+.min-h-screen { min-height: 100vh; }
+.bg-stone-50 { background-color: #fafaf9; }
+.bg-white { background-color: #fff; }
+.bg-white\/80 { background-color: rgb(255 255 255 / 0.8); }
+.text-stone-900 { color: #1c1917; }
+.text-stone-700 { color: #44403c; }
+.text-stone-600 { color: #57534e; }
+.text-stone-500 { color: #78716c; }
+.text-teal-900 { color: #134e4a; }
+.text-teal-800 { color: #115e59; }
+.text-teal-700 { color: #0f766e; }
+.antialiased { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+.border-b { border-bottom-width: 1px; }
+.border-t { border-top-width: 1px; }
+.border { border-width: 1px; }
+.border-stone-200 { border-color: #e7e5e4; }
+.backdrop-blur { backdrop-filter: blur(8px); }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.mb-6 { margin-bottom: 1.5rem; }
+.max-w-5xl { max-width: 64rem; }
+.max-w-2xl { max-width: 42rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-4 { gap: 1rem; }
+.space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
+.space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+.font-semibold { font-weight: 600; }
+.tracking-tight { letter-spacing: -0.025em; }
+.text-center { text-align: center; }
+.rounded { border-radius: 0.25rem; }
+.underline { text-decoration-line: underline; }
+.hover\:text-teal-700:hover { color: #0f766e; }

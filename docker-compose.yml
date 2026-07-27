@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: almanac-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-almanac}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-almanac_africa_ai}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-almanac} -d ${POSTGRES_DB:-almanac_africa_ai}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Do not publish 5432 on public hosts — only the web container needs DB.
+    # Uncomment for local debugging:
+    # ports:
+    #   - "5432:5432"
+
+  web:
+    build: .
+    container_name: almanac-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLASK_APP: wsgi.py
+      FLASK_CONFIG: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-almanac}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-almanac_africa_ai}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_TO_STDOUT: "1"
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      GUNICORN_BIND: ${GUNICORN_BIND:-0.0.0.0:8000}
+      RATELIMIT_STORAGE_URI: ${RATELIMIT_STORAGE_URI:-memory://}
+      PREFERRED_URL_SCHEME: https
+      # Behind nginx/Caddy/Cloudflare — trust one hop of X-Forwarded-* headers
+      PROXY_FIX: ${PROXY_FIX:-1}
+      MAIL_SERVER: ${MAIL_SERVER:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USE_TLS: ${MAIL_USE_TLS:-1}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER:-}
+    ports:
+      # Prefer loopback so only nginx on this host can reach Gunicorn:
+      - "127.0.0.1:${HOST_PORT:-8000}:8000"
+    volumes:
+      - media_uploads:/app/app/static/uploads
+      - app_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+volumes:
+  postgres_data:
+  media_uploads:
+  app_logs:

@@ -1,0 +1,21 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Preview — {{ newsletter.subject }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-stone-500">Responsive HTML preview (as sent to subscribers).</p>
+    <a href="{{ url_for('admin.newsletter_detail', newsletter_id=newsletter.id) }}" class="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
+      Back to campaign
+    </a>
+  </div>
+  <div class="overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 shadow-inner">
+    <iframe
+      title="Email preview"
+      class="h-[75vh] w-full bg-white"
+      src="{{ url_for('admin.newsletter_preview_html', newsletter_id=newsletter.id) }}"
+    ></iframe>
+  </div>
+</section>
+{% endblock %}

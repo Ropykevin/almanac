@@ -1,0 +1,76 @@
+{# Expects: projects (list), optional tracking_show_all_link, optional tracking_always #}
+{% set show_tracking = projects or tracking_always %}
+{% if show_tracking %}
+{% set placeholder_projects = [
+  {
+    "title": "Frontier Models",
+    "description": "A running record of how frontier AI systems are being adopted, regulated, and contested across African markets.",
+    "live": true
+  },
+  {
+    "title": "Energy",
+    "description": "Tracking the energy demand of AI infrastructure — and what it means for power, cost, and climate policy on the continent.",
+    "live": true
+  },
+  {
+    "title": "AI in Society",
+    "description": "How AI is reshaping work, culture, and public life — essays and notes that stay open as the field moves.",
+    "live": false
+  },
+] %}
+<section class="home-tracking">
+  <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+    <div class="reveal-on-scroll home-tracking__head">
+      <div class="home-tracking__label-row">
+        <span class="home-tracking__dot" aria-hidden="true"></span>
+        <p class="home-tracking__kicker">Ongoing research</p>
+        <span class="home-tracking__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="public-section-title mt-5 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
+        What we’re tracking.
+      </h2>
+      <p class="mt-4 max-w-2xl text-lg leading-relaxed text-stone-600">
+        {% if projects %}
+          We’re starting with living projects and building from there. Each is maintained continuously rather than published once.
+        {% else %}
+          We’re starting with two living projects and building from there. Each is maintained continuously rather than published once.
+        {% endif %}
+      </p>
+      {% if tracking_show_all_link and projects %}
+        <a href="{{ url_for('main.projects') }}" class="mt-5 inline-flex text-sm font-semibold underline underline-offset-4" style="color: var(--brand-primary)">
+          View all projects →
+        </a>
+      {% endif %}
+    </div>
+
+    <ul class="reveal-on-scroll home-tracking__list mt-10">
+      {% if projects %}
+        {% for project in projects %}
+          <li>
+            <a href="{{ url_for('main.project_detail', slug=project.slug) }}" class="home-tracking__row home-tracking__row--link">
+              <h3 class="home-tracking__title">{{ project.title }}</h3>
+              <p class="home-tracking__desc">{{ project.description }}</p>
+              <p class="home-tracking__status {% if project.status.value == 'LIVE' %}is-live{% else %}is-soon{% endif %}">
+                <span class="home-tracking__status-mark" aria-hidden="true"></span>
+                {% if project.status.value == 'LIVE' %}Live{% else %}Coming soon{% endif %}
+                <span class="home-tracking__more">Read more</span>
+              </p>
+            </a>
+          </li>
+        {% endfor %}
+      {% else %}
+        {% for project in placeholder_projects %}
+          <li class="home-tracking__row">
+            <h3 class="home-tracking__title">{{ project.title }}</h3>
+            <p class="home-tracking__desc">{{ project.description }}</p>
+            <p class="home-tracking__status {% if project.live %}is-live{% else %}is-soon{% endif %}">
+              <span class="home-tracking__status-mark" aria-hidden="true"></span>
+              {% if project.live %}Live{% else %}Coming soon{% endif %}
+            </p>
+          </li>
+        {% endfor %}
+      {% endif %}
+    </ul>
+  </div>
+</section>
+{% endif %}

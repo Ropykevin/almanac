@@ -1,0 +1,10 @@
+{% set styles = {
+  'DRAFT': 'bg-amber-50 text-amber-800 border-amber-100',
+  'REVIEW': 'bg-sky-50 text-sky-800 border-sky-100',
+  'SCHEDULED': 'bg-cyan-50 text-cyan-800 border-cyan-100',
+  'PUBLISHED': 'bg-emerald-50 text-emerald-800 border-emerald-100',
+  'ARCHIVED': 'bg-stone-100 text-stone-700 border-stone-200',
+} %}
+<span class="inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide {{ styles.get(article.status.value, styles.DRAFT) }}">
+  {{ article.status.value|replace('_', ' ') }}
+</span>

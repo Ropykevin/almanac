@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="relative overflow-hidden">
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--brand-primary)_10%,transparent),transparent_55%)]"></div>
+  <div class="relative mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+    <p class="page-kicker reveal-on-scroll">Projects</p>
+    <h1 class="public-section-title reveal-on-scroll mt-3 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
+      Research ongoing
+    </h1>
+    <p class="reveal-on-scroll mt-6 font-display text-2xl leading-snug text-stone-700 sm:text-3xl">
+      Live inquiries into African AI governance, infrastructure, and public interest technology.
+    </p>
+  </div>
+</section>
+
+{% include "partials/projects_tracking.html" %}
+
+{% if not projects %}
+<section class="mx-auto max-w-3xl px-4 pb-20 sm:px-6">
+  <p class="text-stone-600">Projects will appear here as research strands go live.</p>
+  <div class="mt-8 flex flex-wrap gap-3">
+    <a href="{{ url_for('main.archive') }}" class="btn-primary">Read the blog</a>
+    <a href="{{ url_for('main.subscribe') }}" class="btn-outline">Get monthly news</a>
+  </div>
+</section>
+{% else %}
+<section class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+  <div class="flex flex-wrap gap-3">
+    <a href="{{ url_for('main.archive') }}" class="btn-primary">Read the blog</a>
+    <a href="{{ url_for('main.subscribe') }}" class="btn-outline">Get monthly news</a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="relative flex min-h-screen flex-col justify-center px-4 py-12">
+  <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_#ccfbf1_0%,_#fafaf9_45%,_#f5f5f4_100%)]"></div>
+  <div class="mx-auto w-full max-w-md">
+    <div class="mb-8 text-center">
+      <a href="{{ url_for('main.index') }}" class="font-display text-2xl font-semibold tracking-tight text-brand-900">
+        {{ config.APP_NAME }}
+      </a>
+      {% block auth_heading %}{% endblock %}
+    </div>
+
+    {% include "partials/flash.html" %}
+
+    <div class="rounded-2xl border border-stone-200/80 bg-white/90 p-8 shadow-sm shadow-stone-200/60 backdrop-blur">
+      {% block auth_content %}{% endblock %}
+    </div>
+
+    {% block auth_footer %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

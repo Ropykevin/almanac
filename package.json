@@ -1,0 +1,13 @@
+{
+  "name": "liminal-ai-africa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend tooling for Liminal AI Africa (Tailwind CSS)",
+  "scripts": {
+    "build:css": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/main.css --minify",
+    "watch:css": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/main.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

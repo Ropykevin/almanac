@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Choose media — {{ config.APP_NAME }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-stone-100 text-stone-900">
+  <div class="mx-auto max-w-5xl px-4 py-4">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="font-semibold text-lg">Media library</h1>
+        <p class="text-sm text-stone-500">Select a file to insert into the editor.</p>
+      </div>
+      <form method="get" class="flex gap-2">
+        <input type="hidden" name="kind" value="{{ kind }}">
+        <input
+          type="search"
+          name="q"
+          value="{{ q }}"
+          placeholder="Search"
+          class="rounded-md border border-stone-300 px-3 py-1.5 text-sm"
+        >
+        <button type="submit" class="rounded-md bg-teal-800 px-3 py-1.5 text-sm font-medium text-white">Search</button>
+      </form>
+    </div>
+
+    <div class="mb-4 flex flex-wrap gap-2 text-sm">
+      {% for key, label in [("image", "Images"), ("pdf", "PDFs"), ("document", "Documents"), ("all", "All")] %}
+        <a
+          href="{{ url_for('admin.media_picker', kind=key, q=q) }}"
+          class="rounded-md border px-2.5 py-1 {% if kind == key %}border-teal-800 bg-teal-800 text-white{% else %}border-stone-300 bg-white{% endif %}"
+        >{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    {% if page_data.items %}
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        {% for item in page_data.items %}
+          {% set item_kind = 'image' if item.mime_type.startswith('image/') else ('pdf' if item.mime_type == 'application/pdf' or item.file_name.lower().endswith('.pdf') else 'document') %}
+          <button
+            type="button"
+            class="media-pick overflow-hidden rounded-xl border border-stone-200 bg-white text-left hover:border-teal-600"
+            data-url="{{ url_for('static', filename=item.path) }}"
+            data-alt="{{ item.alt_text or item.original_name }}"
+            data-kind="{{ item_kind }}"
+            data-name="{{ item.original_name }}"
+          >
+            <div class="flex aspect-square items-center justify-center bg-stone-50">
+              {% if item_kind == 'image' %}
+                <img src="{{ url_for('static', filename=item.path) }}" alt="" class="h-full w-full object-cover">
+              {% else %}
+                <span class="px-2 text-center text-xs font-medium text-stone-600">{{ item.original_name }}</span>
+              {% endif %}
+            </div>
+            <p class="truncate px-2 py-2 text-xs text-stone-700">{{ item.original_name }}</p>
+          </button>
+        {% endfor %}
+      </div>
+
+      {% if page_data.pages > 1 %}
+        <div class="mt-4 flex justify-between text-sm">
+          {% if page_data.has_prev %}
+            <a href="{{ url_for('admin.media_picker', page=page_data.page - 1, kind=kind, q=q) }}" class="text-teal-800">Previous</a>
+          {% else %}<span></span>{% endif %}
+          <span class="text-stone-500">Page {{ page_data.page }} / {{ page_data.pages }}</span>
+          {% if page_data.has_next %}
+            <a href="{{ url_for('admin.media_picker', page=page_data.page + 1, kind=kind, q=q) }}" class="text-teal-800">Next</a>
+          {% else %}<span></span>{% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <p class="rounded-xl border border-dashed border-stone-300 bg-white px-4 py-10 text-center text-sm text-stone-500">
+        No files found. Upload media in the admin library first.
+      </p>
+    {% endif %}
+  </div>
+
+  <script>
+    document.querySelectorAll(".media-pick").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const payload = {
+          liminalMedia: true,
+          url: btn.dataset.url,
+          alt: btn.dataset.alt || "",
+          kind: btn.dataset.kind || "",
+          name: btn.dataset.name || "",
+        };
+        if (window.opener) {
+          window.opener.postMessage(payload, window.location.origin);
+        }
+        window.close();
+      });
+    });
+  </script>
+</body>
+</html>

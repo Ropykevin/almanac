@@ -1,0 +1,47 @@
+{% extends "auth/layout.html" %}
+
+{% block title %}Sign in — {{ config.APP_NAME }}{% endblock %}
+
+{% block auth_heading %}
+<p class="mt-2 text-sm text-stone-600">Sign in to manage publishing</p>
+{% endblock %}
+
+{% block auth_content %}
+<form method="post" novalidate class="space-y-5">
+  {{ form.hidden_tag() }}
+
+  <div class="space-y-1.5">
+    {{ form.email.label(class="block text-sm font-medium text-stone-700") }}
+    {{ form.email(class="block w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-stone-900 shadow-sm outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+    {% for error in form.email.errors %}
+      <p class="text-sm text-rose-600">{{ error }}</p>
+    {% endfor %}
+  </div>
+
+  <div class="space-y-1.5">
+    <div class="flex items-center justify-between">
+      {{ form.password.label(class="block text-sm font-medium text-stone-700") }}
+      <a href="{{ url_for('auth.forgot_password') }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">
+        Forgot password?
+      </a>
+    </div>
+    {{ form.password(class="block w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-stone-900 shadow-sm outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+    {% for error in form.password.errors %}
+      <p class="text-sm text-rose-600">{{ error }}</p>
+    {% endfor %}
+  </div>
+
+  <label class="flex items-center gap-2 text-sm text-stone-600">
+    {{ form.remember_me(class="h-4 w-4 rounded border-stone-300 text-brand-700 focus:ring-brand-600") }}
+    <span>{{ form.remember_me.label.text }}</span>
+  </label>
+
+  {{ form.submit(class="w-full rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600/40") }}
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+<p class="mt-6 text-center text-sm text-stone-500">
+  Access is invite-only. Contact your administrator for an account.
+</p>
+{% endblock %}

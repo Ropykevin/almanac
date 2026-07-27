@@ -1,0 +1,132 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Comments — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <p class="text-sm text-stone-500">
+    Moderate reader comments before they appear on published articles.
+  </p>
+
+  {% set filters = [
+    ("pending", "Pending", counts.pending),
+    ("approved", "Approved", counts.approved),
+    ("all", "All", counts.ALL),
+  ] %}
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap gap-2">
+      {% for key, label, count in filters %}
+        <a
+          href="{{ url_for('admin.comment_list', status=key, q=q) }}"
+          class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition
+            {% if current_status == key %}
+              border-brand-700 bg-brand-700 text-white
+            {% else %}
+              border-stone-200 bg-white text-stone-700 hover:border-stone-300
+            {% endif %}"
+        >
+          {{ label }}
+          <span class="rounded {% if current_status == key %}bg-white/20{% else %}bg-stone-100{% endif %} px-1.5 py-0.5 text-xs">
+            {{ count }}
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+    <form method="get" class="ml-auto flex gap-2">
+      {% if current_status and current_status != 'all' %}
+        <input type="hidden" name="status" value="{{ current_status }}">
+      {% endif %}
+      <input
+        type="search"
+        name="q"
+        value="{{ q }}"
+        placeholder="Search comments"
+        class="w-56 rounded-lg border border-stone-200 px-3 py-1.5 text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15"
+      >
+      <button type="submit" class="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:border-stone-300">
+        Search
+      </button>
+    </form>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if comments %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">Comment</th>
+              <th class="px-5 py-3 font-medium">Article</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Submitted</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for comment in comments %}
+              <tr class="align-top">
+                <td class="px-5 py-4">
+                  <p class="font-medium text-stone-900">{{ comment.full_name }}</p>
+                  <p class="text-xs text-stone-500">{{ comment.email }}</p>
+                  <p class="mt-2 max-w-md whitespace-pre-line text-stone-700">{{ comment.comment }}</p>
+                </td>
+                <td class="px-5 py-4">
+                  {% if comment.article %}
+                    <a
+                      href="{{ url_for('main.article_detail', slug=comment.article.slug) }}"
+                      class="font-medium text-brand-800 hover:underline"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      {{ comment.article.title }}
+                    </a>
+                  {% else %}
+                    <span class="text-stone-400">—</span>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                  {% if comment.approved %}
+                    <span class="inline-flex rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">Approved</span>
+                  {% else %}
+                    <span class="inline-flex rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800">Pending</span>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4 text-stone-500">
+                  {{ comment.created_at.strftime('%b %d, %Y %H:%M') if comment.created_at else '—' }}
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex flex-wrap justify-end gap-2">
+                    {% if not comment.approved %}
+                      <form method="post" action="{{ url_for('admin.comment_approve', comment_id=comment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="rounded-md border border-stone-200 px-2.5 py-1 text-xs font-medium text-stone-700 hover:border-brand-700 hover:text-brand-800">
+                          Approve
+                        </button>
+                      </form>
+                    {% else %}
+                      <form method="post" action="{{ url_for('admin.comment_unapprove', comment_id=comment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="rounded-md border border-stone-200 px-2.5 py-1 text-xs font-medium text-stone-700 hover:border-stone-300">
+                          Unapprove
+                        </button>
+                      </form>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('admin.comment_delete', comment_id=comment.id) }}" onsubmit="return confirm('Delete this comment?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="rounded-md border border-rose-200 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="px-5 py-10 text-center text-sm text-stone-500">No comments in this view.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Projects — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <p class="text-sm text-stone-500">
+      Ongoing research shown on the homepage under “What we’re tracking” and on the Projects page.
+    </p>
+    <a
+      href="{{ url_for('admin.project_create') }}"
+      class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
+    >
+      Add project
+    </a>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if projects %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">Project</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Order</th>
+              <th class="px-5 py-3 font-medium">Visibility</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for project in projects %}
+              <tr>
+                <td class="px-5 py-4">
+                  <p class="font-medium text-stone-900">{{ project.title }}</p>
+                  <p class="mt-1 max-w-md text-xs leading-relaxed text-stone-500 line-clamp-2">{{ project.description }}</p>
+                </td>
+                <td class="px-5 py-4">
+                  {% if project.status.value == 'LIVE' %}
+                    <span class="inline-flex rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">Live</span>
+                  {% else %}
+                    <span class="inline-flex rounded-md bg-stone-100 px-2 py-1 text-xs font-medium text-stone-600">Coming soon</span>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4 text-stone-600">{{ project.sort_order }}</td>
+                <td class="px-5 py-4">
+                  {% if project.is_published %}
+                    <span class="text-xs font-medium text-emerald-700">Public</span>
+                  {% else %}
+                    <span class="text-xs font-medium text-stone-500">Hidden</span>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex flex-wrap justify-end gap-2">
+                    <a
+                      href="{{ url_for('admin.project_edit', project_id=project.id) }}"
+                      class="rounded-md border border-stone-200 px-2.5 py-1 text-xs font-medium text-stone-700 hover:border-brand-700 hover:text-brand-800"
+                    >
+                      Edit
+                    </a>
+                    <form method="post" action="{{ url_for('admin.project_delete', project_id=project.id) }}" onsubmit="return confirm('Delete this project?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="rounded-md border border-rose-200 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="px-5 py-12 text-center">
+        <p class="text-sm text-stone-500">No projects yet.</p>
+        <a href="{{ url_for('admin.project_create') }}" class="mt-4 inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+          Add your first project
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

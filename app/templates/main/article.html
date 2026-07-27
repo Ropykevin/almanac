@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="reading-progress" data-reading-progress aria-hidden="true"></div>
+
+<article itemscope itemtype="https://schema.org/NewsArticle">
+  <meta itemprop="headline" content="{{ article.seo_title or article.title }}">
+  {% if seo is defined and seo %}
+    <meta itemprop="description" content="{{ seo.meta_description }}">
+    <meta itemprop="mainEntityOfPage" content="{{ seo.canonical_url }}">
+  {% endif %}
+
+  <header class="pt-10 sm:pt-14">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6">
+      {% if article.categories %}
+        <p class="page-kicker reveal-on-scroll" style="color: var(--brand-primary)">
+          {{ article.categories|map(attribute='name')|join(' · ') }}
+        </p>
+      {% endif %}
+      <h1 class="reveal-on-scroll mt-4 font-display text-[clamp(2.1rem,5vw,3.4rem)] font-semibold leading-[1.12] tracking-tight text-ink-900" itemprop="name">
+        {{ article.title }}
+      </h1>
+      {% if article.subtitle %}
+        <p class="reveal-on-scroll mt-5 text-xl leading-relaxed text-stone-600 sm:text-2xl">{{ article.subtitle }}</p>
+      {% endif %}
+
+      <div class="reveal-on-scroll mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-stone-300/80 py-4 text-sm text-stone-500">
+        {% if article.author %}
+          <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+            <span itemprop="name" class="font-medium text-ink-900">{{ article.author.full_name }}</span>
+          </span>
+        {% endif %}
+        {% if article.reading_time %}
+          <span>{{ article.reading_time }} min read</span>
+        {% endif %}
+        {% if article.published_at %}
+          <time itemprop="datePublished" datetime="{{ article.published_at.isoformat() }}">{{ article.published_at.strftime('%B %d, %Y') }}</time>
+        {% endif %}
+      </div>
+
+      {% if article.tags %}
+        <div class="reveal-on-scroll mt-5 flex flex-wrap gap-2">
+          {% for tag in article.tags %}
+            <a href="{{ url_for('main.archive', tag=tag.slug) }}" class="filter-chip text-xs">
+              #{{ tag.name }}
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    {% if article.featured_image_media %}
+      <div class="article-hero-media reveal-on-scroll mx-auto mt-10 max-w-5xl px-0 sm:mt-12 sm:px-6">
+        <img
+          src="{{ url_for('static', filename=article.featured_image_media.path) }}"
+          alt="{{ article.featured_image_media.alt_text or article.title }}"
+          class="aspect-[21/9] w-full object-cover sm:rounded-sm"
+          itemprop="image"
+        >
+      </div>
+    {% endif %}
+  </header>
+
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16" data-article-body>
+    {% if article.excerpt %}
+      <p class="reveal-on-scroll border-l-2 pl-5 font-display text-xl leading-relaxed text-stone-700 sm:text-2xl" style="border-color: var(--brand-primary)">
+        {{ article.excerpt }}
+      </p>
+    {% endif %}
+
+    <div class="prose-article reveal-on-scroll mt-10" itemprop="articleBody">
+      {% if article.content %}
+        {{ article.content|safe }}
+      {% endif %}
+    </div>
+
+    {% set share_url = seo.canonical_url if seo is defined and seo and seo.canonical_url else request.url %}
+    {% set share_title = article.title|urlencode %}
+    {% set share_url_enc = share_url|urlencode %}
+
+    <div
+      id="engage"
+      class="reveal-on-scroll mt-12 flex flex-wrap items-center gap-3 border-y border-stone-300/80 py-5"
+      data-article-engage
+      data-like-url="{{ url_for('main.article_like', slug=article.slug) }}"
+      data-csrf-token="{{ csrf_token() }}"
+      data-share-url="{{ share_url }}"
+      data-share-title="{{ article.title }}"
+    >
+      <button
+        type="button"
+        class="engage-btn {% if liked %}is-active{% endif %}"
+        data-like-btn
+        aria-pressed="{{ 'true' if liked else 'false' }}"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="{% if liked %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 5.2 5.5 5.5 0 0 1 21.5 12C19 16.5 12 21 12 21z"/>
+        </svg>
+        <span data-like-label>{% if liked %}Liked{% else %}Like{% endif %}</span>
+        <span class="engage-count" data-like-count>{{ like_count }}</span>
+      </button>
+
+      <div class="engage-share" data-share-menu>
+        <button type="button" class="engage-btn" data-share-toggle aria-expanded="false" aria-haspopup="true">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/>
+            <path d="M16 6 12 2 8 6"/>
+            <path d="M12 2v13"/>
+          </svg>
+          Share
+        </button>
+        <div class="engage-share__panel hidden" data-share-panel role="menu">
+          <a
+            role="menuitem"
+            class="share-item share-item--x"
+            href="https://twitter.com/intent/tweet?url={{ share_url_enc }}&text={{ share_title }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="share-item__icon">{% with network='twitter' %}{% include "partials/social_icon.html" %}{% endwith %}</span>
+            <span>Share on X</span>
+          </a>
+          <a
+            role="menuitem"
+            class="share-item share-item--linkedin"
+            href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url_enc }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="share-item__icon">{% with network='linkedin' %}{% include "partials/social_icon.html" %}{% endwith %}</span>
+            <span>LinkedIn</span>
+          </a>
+          <a
+            role="menuitem"
+            class="share-item share-item--facebook"
+            href="https://www.facebook.com/sharer/sharer.php?u={{ share_url_enc }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="share-item__icon">{% with network='facebook' %}{% include "partials/social_icon.html" %}{% endwith %}</span>
+            <span>Facebook</span>
+          </a>
+          <button type="button" role="menuitem" class="share-item share-item--copy" data-copy-link>
+            <span class="share-item__icon">{% with network='copy' %}{% include "partials/social_icon.html" %}{% endwith %}</span>
+            <span data-copy-label>Copy link</span>
+          </button>
+          <button type="button" role="menuitem" class="share-item share-item--native hidden" data-native-share>
+            <span class="share-item__icon">{% with network='share' %}{% include "partials/social_icon.html" %}{% endwith %}</span>
+            <span>More options</span>
+          </button>
+        </div>
+      </div>
+
+      {% if article.allow_comments %}
+        <a href="#comments" class="engage-btn">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M4 5h16v11H8l-4 3V5z"/>
+          </svg>
+          Comments
+          <span class="engage-count">{{ comments|length }}</span>
+        </a>
+      {% endif %}
+    </div>
+
+    {% if article.author %}
+      <aside class="reveal-on-scroll mt-14">
+        <p class="page-kicker">Author</p>
+        <div class="mt-5 flex gap-4">
+          <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-display text-lg font-semibold text-white" style="background: var(--brand-primary)">
+            {{ article.author.full_name[:1] }}
+          </div>
+          <div>
+            <h2 class="font-display text-xl font-semibold text-ink-900">{{ article.author.full_name }}</h2>
+            <p class="mt-1 text-sm text-stone-500">{{ article.author.role_label }}</p>
+            {% if article.author.bio %}
+              <p class="mt-3 text-sm leading-relaxed text-stone-600">{{ article.author.bio }}</p>
+            {% else %}
+              <p class="mt-3 text-sm leading-relaxed text-stone-600">
+                Writing for {{ site.name if site else config.APP_NAME }} on technology, culture, and the futures taking shape across Africa.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </aside>
+    {% endif %}
+
+    {% if article.allow_comments %}
+      <section id="comments" class="reveal-on-scroll mt-16 border-t border-stone-300/80 pt-12">
+        <h2 class="public-section-title text-2xl font-semibold text-ink-900 sm:text-3xl">
+          Comments
+        </h2>
+        <p class="mt-2 text-sm text-stone-500">
+          Join the conversation. Comments are reviewed before they appear.
+        </p>
+
+        {% if comments %}
+          <ul class="mt-8 space-y-6">
+            {% for comment in comments %}
+              <li class="border-b border-stone-300/60 pb-6 last:border-0">
+                <p class="font-medium text-ink-900">{{ comment.full_name }}</p>
+                <time class="mt-0.5 block text-xs text-stone-500" datetime="{{ comment.created_at.isoformat() }}">
+                  {{ comment.created_at.strftime('%B %d, %Y') }}
+                </time>
+                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-stone-700">{{ comment.comment }}</p>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="mt-8 text-sm text-stone-500">No comments yet — be the first to share a thought.</p>
+        {% endif %}
+
+        <form
+          method="post"
+          action="{{ url_for('main.article_comment', slug=article.slug) }}"
+          class="mt-10 space-y-4 border border-stone-300/80 bg-white/70 p-5 sm:p-6"
+          novalidate
+        >
+          {{ comment_form.hidden_tag() }}
+          <p class="font-display text-xl font-semibold text-ink-900">Leave a comment</p>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="space-y-1.5">
+              {{ comment_form.full_name.label(class="block text-sm font-medium text-stone-700") }}
+              {{ comment_form.full_name(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-primary)_18%,transparent)]") }}
+            </div>
+            <div class="space-y-1.5">
+              {{ comment_form.email.label(class="block text-sm font-medium text-stone-700") }}
+              {{ comment_form.email(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-primary)_18%,transparent)]") }}
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            {{ comment_form.body.label(class="block text-sm font-medium text-stone-700") }}
+            {{ comment_form.body(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-primary)_18%,transparent)]") }}
+          </div>
+          {{ comment_form.submit(class="btn-primary") }}
+        </form>
+      </section>
+    {% endif %}
+  </div>
+
+  {% if related %}
+    <section class="border-t border-stone-300/80 bg-[var(--paper-deep)]">
+      <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
+        <h2 class="public-section-title reveal-on-scroll text-3xl font-semibold text-ink-900">Related reading</h2>
+        <div class="mt-8 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+          {% for article in related %}
+            <div class="reveal-on-scroll">
+              {% include "partials/article_teaser.html" %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+</article>
+{% endblock %}

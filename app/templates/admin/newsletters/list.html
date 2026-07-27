@@ -1,0 +1,103 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Newsletters — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <p class="text-sm text-stone-500">Compose campaigns, preview HTML, schedule, and send to active subscribers.</p>
+    <a href="{{ url_for('admin.newsletter_create') }}" class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+      New campaign
+    </a>
+  </div>
+
+  {% set filters = [
+    ("ALL", "All", counts.ALL),
+    ("DRAFT", "Drafts", counts.DRAFT),
+    ("SCHEDULED", "Scheduled", counts.SCHEDULED),
+    ("SENDING", "Sending", counts.SENDING),
+    ("SENT", "Sent", counts.SENT),
+  ] %}
+  <div class="flex flex-wrap gap-2">
+    {% for key, label, count in filters %}
+      <a
+        href="{{ url_for('admin.newsletter_list', status=key) }}"
+        class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition
+          {% if current_status == key %}
+            border-brand-700 bg-brand-700 text-white
+          {% else %}
+            border-stone-200 bg-white text-stone-700 hover:border-stone-300
+          {% endif %}"
+      >
+        {{ label }}
+        <span class="rounded {% if current_status == key %}bg-white/20{% else %}bg-stone-100{% endif %} px-1.5 py-0.5 text-xs">
+          {{ count }}
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {% if newsletters %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-stone-50/80 text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-5 py-3 font-medium">Campaign</th>
+              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">Article</th>
+              <th class="px-5 py-3 font-medium">When</th>
+              <th class="px-5 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for item in newsletters %}
+              <tr class="hover:bg-stone-50/70">
+                <td class="px-5 py-4">
+                  <a href="{{ url_for('admin.newsletter_detail', newsletter_id=item.id) }}" class="font-medium text-stone-900 hover:text-brand-700">
+                    {{ item.subject }}
+                  </a>
+                </td>
+                <td class="px-5 py-4">
+                  {% set badge = {
+                    "DRAFT": "bg-stone-100 text-stone-700 border-stone-200",
+                    "SCHEDULED": "bg-amber-50 text-amber-800 border-amber-100",
+                    "SENDING": "bg-sky-50 text-sky-800 border-sky-100",
+                    "SENT": "bg-teal-50 text-teal-800 border-teal-100",
+                  } %}
+                  <span class="inline-flex rounded border px-2 py-0.5 text-xs font-medium {{ badge.get(item.status.value, 'bg-stone-50 text-stone-600 border-stone-200') }}">
+                    {{ item.status.value|title }}
+                  </span>
+                </td>
+                <td class="px-5 py-4 text-stone-600">
+                  {% if item.article %}{{ item.article.title }}{% else %}—{% endif %}
+                </td>
+                <td class="px-5 py-4 text-stone-600">
+                  {% if item.sent_at %}
+                    Sent {{ item.sent_at.strftime("%Y-%m-%d %H:%M") }}
+                  {% elif item.scheduled_at %}
+                    {{ item.scheduled_at.strftime("%Y-%m-%d %H:%M") }} UTC
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4 text-right">
+                  <a href="{{ url_for('admin.newsletter_detail', newsletter_id=item.id) }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">Open</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="px-5 py-14 text-center">
+        <h3 class="font-display text-lg font-semibold text-stone-900">No campaigns yet</h3>
+        <p class="mt-1 text-sm text-stone-500">Create a campaign from a published article.</p>
+        <a href="{{ url_for('admin.newsletter_create') }}" class="mt-5 inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+          Create campaign
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

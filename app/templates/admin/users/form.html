@@ -1,0 +1,66 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}{{ page_title }} — {{ config.APP_NAME }}{% endblock %}
+
+{% block admin_content %}
+<section class="mx-auto max-w-xl space-y-6">
+  <p class="text-sm text-stone-500">
+    {% if user %}
+      Update role, profile details, or set a new password. Leave password blank to keep the current one.
+    {% else %}
+      Create an Admin, Editor, or Super Admin. They can sign in immediately with the password you set.
+    {% endif %}
+  </p>
+
+  <form method="post" novalidate class="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    {{ form.hidden_tag() }}
+
+    <div class="space-y-1.5">
+      {{ form.full_name.label(class="block text-sm font-medium text-stone-700") }}
+      {{ form.full_name(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+      {% for error in form.full_name.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="space-y-1.5">
+      {{ form.email.label(class="block text-sm font-medium text-stone-700") }}
+      {{ form.email(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+      {% for error in form.email.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="space-y-1.5">
+      {{ form.role.label(class="block text-sm font-medium text-stone-700") }}
+      {{ form.role(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1.5">
+        {{ form.password.label(class="block text-sm font-medium text-stone-700") }}
+        {{ form.password(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15", autocomplete="new-password") }}
+        {% for error in form.password.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="space-y-1.5">
+        {{ form.password_confirm.label(class="block text-sm font-medium text-stone-700") }}
+        {{ form.password_confirm(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15", autocomplete="new-password") }}
+        {% for error in form.password_confirm.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="space-y-1.5">
+      {{ form.bio.label(class="block text-sm font-medium text-stone-700") }}
+      {{ form.bio(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+    </div>
+
+    <label class="flex items-center gap-2 text-sm text-stone-700">
+      {{ form.is_active(class="h-4 w-4 rounded border-stone-300 text-brand-700") }}
+      <span>{{ form.is_active.label.text }}</span>
+    </label>
+
+    <div class="flex flex-wrap gap-3 pt-2">
+      {{ form.submit(class="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800") }}
+      <a href="{{ url_for('admin.user_list') }}" class="rounded-lg border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-700 hover:border-stone-300">
+        Cancel
+      </a>
+    </div>
+  </form>
+</section>
+{% endblock %}

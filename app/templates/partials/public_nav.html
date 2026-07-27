@@ -1,0 +1,55 @@
+<header class="public-nav sticky top-0 z-40 border-b border-stone-200/70 backdrop-blur-md" data-public-nav>
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+    <a href="{{ url_for('main.index') }}" class="group flex min-w-0 items-center" aria-label="{{ site.name if site else config.APP_NAME }}">
+      <img
+        src="{{ url_for('static', filename='logo.jpg') }}"
+        alt="{{ site.name if site else config.APP_NAME }}"
+        class="h-9 w-auto max-w-[min(100%,220px)] object-contain object-left sm:h-10 sm:max-w-[260px]"
+        width="260"
+        height="40"
+      >
+    </a>
+
+    <nav class="hidden items-center gap-1 text-sm font-medium text-stone-600 md:flex" aria-label="Primary">
+      <a href="{{ url_for('main.index') }}"
+        class="nav-link {% if active_nav == 'home' %}is-active{% endif %}">Home</a>
+      <a href="{{ url_for('main.subscribe') }}"
+        class="nav-link {% if active_nav == 'subscribe' %}is-active{% endif %}">Newsletter</a>
+      <a href="{{ url_for('main.archive') }}"
+        class="nav-link {% if active_nav == 'archive' %}is-active{% endif %}">Blog</a>
+      <a href="{{ url_for('main.projects') }}"
+        class="nav-link {% if active_nav == 'projects' %}is-active{% endif %}">Projects</a>
+      <a href="{{ url_for('main.subscribe') }}" class="home-nav-subscribe ml-2">Subscribe</a>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('admin.dashboard') }}"
+        class="ml-1 rounded-md border border-stone-300 bg-white px-3 py-1.5 text-stone-700 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]">
+        Dashboard
+      </a>
+      {% endif %}
+    </nav>
+
+    <button type="button"
+      class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 md:hidden"
+      data-nav-toggle aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </svg>
+    </button>
+  </div>
+
+  <div id="mobile-nav" class="hidden border-t border-stone-200/80 bg-white/95 md:hidden" data-mobile-nav>
+    <nav class="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3 text-sm font-medium text-stone-700" aria-label="Mobile">
+      <a href="{{ url_for('main.index') }}" class="rounded-md px-3 py-2.5 hover:bg-stone-50">Home</a>
+      <a href="{{ url_for('main.subscribe') }}" class="rounded-md px-3 py-2.5 hover:bg-stone-50">Newsletter</a>
+      <a href="{{ url_for('main.archive') }}" class="rounded-md px-3 py-2.5 hover:bg-stone-50">Blog</a>
+      <a href="{{ url_for('main.projects') }}" class="rounded-md px-3 py-2.5 hover:bg-stone-50">Projects</a>
+      <a href="{{ url_for('main.about') }}" class="rounded-md px-3 py-2.5 hover:bg-stone-50">About</a>
+      <a href="{{ url_for('main.search') }}" class="rounded-md px-3 py-2.5 hover:bg-stone-50">Search</a>
+      <a href="{{ url_for('main.subscribe') }}"
+        class="rounded-md px-3 py-2.5 font-semibold hover:bg-stone-50">Subscribe</a>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('admin.dashboard') }}" class="rounded-md px-3 py-2.5 hover:bg-stone-50">Dashboard</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>

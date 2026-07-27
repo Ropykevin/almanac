@@ -1,0 +1,217 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}{{ page_title }} — {{ config.APP_NAME }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/article-content.css') }}">
+{% endblock %}
+
+{% block admin_content %}
+<section
+  class="space-y-6"
+  data-article-form
+  data-upload-url="{{ url_for('admin.article_editor_upload') }}"
+  data-media-picker-url="{{ url_for('admin.media_picker') }}"
+  data-csrf-token="{{ csrf_token() }}"
+>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-stone-500">
+      {% if article %}
+        Editing <span class="font-medium text-stone-800">{{ article.title }}</span>
+      {% else %}
+        Compose a new article. Slug is generated from the title automatically.
+      {% endif %}
+    </p>
+    {% if article %}
+      <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('admin.article_preview', article_id=article.id) }}" class="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
+          Preview
+        </a>
+        {% if article.status.value != 'PUBLISHED' %}
+          <form method="post" action="{{ url_for('admin.article_publish', article_id=article.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Publish</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+    {{ form.hidden_tag() }}
+
+    <div class="space-y-6">
+      <div class="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] space-y-5">
+        <div class="space-y-1.5">
+          {{ form.title.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.title(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 text-stone-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20", id="article-title") }}
+          {% for error in form.title.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div class="space-y-1.5">
+          {{ form.subtitle.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.subtitle(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+        </div>
+
+        <div class="space-y-1.5">
+          {{ form.slug.label(class="block text-sm font-medium text-stone-700") }}
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-stone-400">/</span>
+            {{ form.slug(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 font-mono text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20", id="article-slug") }}
+          </div>
+          <p class="text-xs text-stone-500">Leave blank to auto-generate from the title.</p>
+          {% for error in form.slug.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div class="space-y-1.5">
+          {{ form.excerpt.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.excerpt(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+        </div>
+
+        <div class="space-y-1.5">
+          {{ form.content.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.content(id="article-content", class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm leading-relaxed") }}
+          <p class="text-xs text-stone-500">
+            Rich editor: headings, lists, tables, quotes, code, links, videos, footnotes. Drag images onto the canvas, or use <span class="font-medium text-stone-700">Media library</span> to insert existing files.
+          </p>
+          {% for error in form.content.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] space-y-5">
+        <h2 class="font-display text-lg font-semibold text-stone-900">SEO</h2>
+        <div class="space-y-1.5">
+          {{ form.seo_title.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.seo_title(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+        </div>
+        <div class="space-y-1.5">
+          {{ form.seo_description.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.seo_description(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+        </div>
+        <div class="space-y-1.5">
+          {{ form.canonical_url.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.canonical_url(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+        </div>
+      </div>
+    </div>
+
+    <aside class="space-y-6">
+      <div class="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] space-y-4">
+        <h2 class="font-display text-lg font-semibold text-stone-900">Publishing</h2>
+
+        <div class="space-y-1.5">
+          {{ form.status.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.status(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20", id="article-status") }}
+          {% for error in form.status.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div class="space-y-1.5">
+          {{ form.published_at.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.published_at(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+        </div>
+
+        <div class="space-y-1.5" id="schedule-field">
+          {{ form.scheduled_at.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.scheduled_at(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+          {% for error in form.scheduled_at.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div class="space-y-1.5">
+          {{ form.reading_time.label(class="block text-sm font-medium text-stone-700") }}
+          {{ form.reading_time(class="block w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20") }}
+        </div>
+
+        <label class="flex items-center gap-2 text-sm text-stone-700">
+          {{ form.featured(class="h-4 w-4 rounded border-stone-300 text-brand-700") }}
+          <span>{{ form.featured.label.text }}</span>
+        </label>
+        <label class="flex items-center gap-2 text-sm text-stone-700">
+          {{ form.allow_comments(class="h-4 w-4 rounded border-stone-300 text-brand-700") }}
+          <span>{{ form.allow_comments.label.text }}</span>
+        </label>
+      </div>
+
+      <div class="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="font-display text-lg font-semibold text-stone-900">Categories</h2>
+          <a href="{{ url_for('admin.category_list') }}" class="text-xs font-medium text-brand-700 hover:text-brand-800">Manage</a>
+        </div>
+        {% if form.categories.choices %}
+          <ul class="max-h-48 space-y-2 overflow-y-auto text-sm text-stone-700">
+            {% for subfield in form.categories %}
+              <li>
+                <label class="flex cursor-pointer items-start gap-2 rounded-lg px-1 py-0.5 hover:bg-stone-50">
+                  {{ subfield(class="mt-0.5 h-4 w-4 rounded border-stone-300 text-brand-700") }}
+                  <span>{{ subfield.label.text }}</span>
+                </label>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-stone-500">
+            No categories yet.
+            <a href="{{ url_for('admin.category_create') }}" class="font-medium text-brand-700 hover:text-brand-800">Create one</a>
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="font-display text-lg font-semibold text-stone-900">Tags</h2>
+          <a href="{{ url_for('admin.tag_list') }}" class="text-xs font-medium text-brand-700 hover:text-brand-800">Manage</a>
+        </div>
+        {% if form.tags.choices %}
+          <ul class="max-h-48 space-y-2 overflow-y-auto text-sm text-stone-700">
+            {% for subfield in form.tags %}
+              <li>
+                <label class="flex cursor-pointer items-start gap-2 rounded-lg px-1 py-0.5 hover:bg-stone-50">
+                  {{ subfield(class="mt-0.5 h-4 w-4 rounded border-stone-300 text-brand-700") }}
+                  <span>{{ subfield.label.text }}</span>
+                </label>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-stone-500">
+            No tags yet.
+            <a href="{{ url_for('admin.tag_create') }}" class="font-medium text-brand-700 hover:text-brand-800">Create one</a>
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] space-y-4">
+        <h2 class="font-display text-lg font-semibold text-stone-900">Featured image</h2>
+        {% if article and article.featured_image_media %}
+          <div class="overflow-hidden rounded-xl border border-stone-200">
+            <img
+              src="{{ url_for('static', filename=article.featured_image_media.path) }}"
+              alt="{{ article.featured_image_media.alt_text or article.title }}"
+              class="h-40 w-full object-cover"
+            >
+          </div>
+          <label class="flex items-center gap-2 text-sm text-stone-600">
+            {{ form.clear_featured_image(class="h-4 w-4 rounded border-stone-300 text-brand-700") }}
+            <span>{{ form.clear_featured_image.label.text }}</span>
+          </label>
+        {% endif %}
+        {{ form.featured_image_file(class="block w-full text-sm text-stone-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-800") }}
+        {% for error in form.featured_image_file.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="flex flex-col gap-2">
+        {{ form.submit(class="w-full rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800") }}
+        <a href="{{ url_for('admin.article_list') }}" class="w-full rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-center text-sm font-medium text-stone-700 hover:bg-stone-50">
+          Cancel
+        </a>
+      </div>
+    </aside>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/tinymce@7.6.0/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="{{ url_for('static', filename='js/articles.js') }}" defer></script>
+{% endblock %}

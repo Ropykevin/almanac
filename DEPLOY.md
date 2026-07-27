@@ -178,3 +178,30 @@ docker compose exec web flask db downgrade
 docker compose up --build -d
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+---
+
+## 10. Troubleshooting: `Name or service not known` (database)
+
+The web container could not resolve the Postgres hostname.
+
+**Fix on the VPS:**
+
+```bash
+cd ~/almanac
+# Ensure .env has SECRET_KEY and POSTGRES_PASSWORD (not DATABASE_URL=localhost for Docker)
+docker compose down
+docker compose up --build -d
+docker compose ps
+docker compose logs db --tail 50
+docker compose logs web --tail 50
+```
+
+Confirm both services are on the same network and `db` resolves:
+
+```bash
+docker compose exec web getent hosts db
+docker compose exec web printenv DB_HOST POSTGRES_DB
+```
+
+You should see `DB_HOST=db`. The entrypoint builds `DATABASE_URL` from that (password is URL-encoded automatically).

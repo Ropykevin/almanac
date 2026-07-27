@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Almanac Africa AI — VPS deployment helper
 # Usage: ./deployment.sh <command> [args]
+# Do not run with `sh deployment.sh` — this script requires bash.
+if [[ -z "${BASH_VERSION:-}" ]]; then
+  echo "Run with bash:  ./deployment.sh <command>"
+  echo "Not:            sh deployment.sh"
+  exit 1
+fi
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,11 +27,16 @@ load_env() {
     echo "Missing .env — run: ./deployment.sh init"
     exit 1
   fi
-  # shellcheck disable=SC1091
+
+  # Passwords often contain ! $ etc. — turn off nounset + history expansion while sourcing.
+  set +u
+  set +H
   set -a
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1091
   source .env
   set +a
+  set -u
+
   HOST_PORT="${HOST_PORT:-8002}"
   DOMAIN="${DOMAIN:-$DOMAIN_DEFAULT}"
   HEALTH_URL="http://127.0.0.1:${HOST_PORT}/health"

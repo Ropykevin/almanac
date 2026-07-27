@@ -109,6 +109,29 @@ class TestingConfig(Config):
     PASSWORD_RESET_MAX_AGE = 3600
 
 
+def _build_database_url_from_parts() -> str | None:
+    """Build SQLAlchemy URL from DB_HOST + POSTGRES_* (Docker Compose path)."""
+    host = _env("DB_HOST")
+    password = _env("POSTGRES_PASSWORD")
+    if not host or not password:
+        return None
+    from urllib.parse import quote_plus
+
+    user = quote_plus(_env("POSTGRES_USER", "almanac") or "almanac")
+    password = quote_plus(password)
+    port = _env("DB_PORT", "5432") or "5432"
+    db = quote_plus(_env("POSTGRES_DB", "almanac_africa_ai") or "almanac_africa_ai")
+    return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db}"
+
+
+def _normalize_database_url(db_uri: str) -> str:
+    if db_uri.startswith("postgres://"):
+        return "postgresql+psycopg://" + db_uri[len("postgres://") :]
+    if db_uri.startswith("postgresql://") and "+psycopg" not in db_uri:
+        return "postgresql+psycopg://" + db_uri[len("postgresql://") :]
+    return db_uri
+
+
 class ProductionConfig(Config):
     """Production settings — secrets must come from the environment."""
 
@@ -138,15 +161,13 @@ class ProductionConfig(Config):
             )
         app.config["SECRET_KEY"] = secret
 
-        db_uri = _env("DATABASE_URL")
+        db_uri = _env("DATABASE_URL") or _build_database_url_from_parts()
         if not db_uri:
-            raise RuntimeError("DATABASE_URL must be set in production.")
-        # Common PaaS form: postgres://… → SQLAlchemy + psycopg
-        if db_uri.startswith("postgres://"):
-            db_uri = "postgresql+psycopg://" + db_uri[len("postgres://") :]
-        elif db_uri.startswith("postgresql://") and "+psycopg" not in db_uri:
-            db_uri = "postgresql+psycopg://" + db_uri[len("postgresql://") :]
-        app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+            raise RuntimeError(
+                "DATABASE_URL must be set in production "
+                "(or DB_HOST + POSTGRES_PASSWORD for Docker)."
+            )
+        app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_database_url(db_uri)
 
         # Trust X-Forwarded-* when behind a reverse proxy / load balancer.
         if _env("PROXY_FIX", "1") in {"1", "true", "True", "yes"}:

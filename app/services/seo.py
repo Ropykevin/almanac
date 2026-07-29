@@ -17,7 +17,7 @@ def site_name() -> str:
 
         return get_site_settings().name
     except Exception:  # noqa: BLE001
-        return current_app.config.get("APP_NAME", "Almanac Africa AI")
+        return current_app.config.get("APP_NAME", "Africa’s AI Almanac")
 
 
 def absolute_url(path_or_url: str | None) -> str | None:

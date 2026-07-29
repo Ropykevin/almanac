@@ -17,7 +17,7 @@
         shaping the continent’s AI future. Essential reading for policymakers, regulators, and tech leaders.
       </p>
       <p class="mt-4 max-w-xl text-base leading-relaxed text-stone-600">
-        Subscribe to get full access to the Newsletter and publication blog.
+        Subscribe to get full access to the latest Newsletter.
       </p>
     </div>
 
@@ -50,23 +50,13 @@
 </section>
 
 <section class="border-t border-stone-300/70">
-  <div class="mx-auto grid max-w-6xl gap-12 px-4 py-14 sm:px-6 sm:py-16 md:grid-cols-2">
+  <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
     <div class="reveal-on-scroll max-w-md">
       <h2 class="public-section-title text-2xl font-semibold tracking-tight text-ink-900 sm:text-3xl">
         Stay up-to-date
       </h2>
       <p class="mt-4 text-base leading-relaxed text-stone-600">
-        Monthly insights delivered to your inbox. Unsubscribe anytime. For a spam-free, ad-free reading experience, plus
-        audio and community features, get the Substack app.
-      </p>
-    </div>
-    <div class="reveal-on-scroll max-w-md">
-      <h2 class="public-section-title text-2xl font-semibold tracking-tight text-ink-900 sm:text-3xl">
-        Join the crew
-      </h2>
-      <p class="mt-4 text-base leading-relaxed text-stone-600">
-        Be part of a community of people who share your interests. Participate in the comments section, or support this
-        work with a subscription.
+        Monthly insights delivered to your inbox. Unsubscribe anytime.
       </p>
     </div>
   </div>
@@ -79,11 +69,58 @@
         Previous newsletters
       </h2>
       <p class="mt-3 text-base leading-relaxed text-stone-600">
-        Browse past monthly dispatches. New issues appear here after they send.
+        Past monthly dispatches, published on Substack.
       </p>
     </div>
 
-    {% if previous_newsletters %}
+    {% if substack_posts %}
+      <ul class="reveal-on-scroll mt-10 divide-y divide-stone-200 border-t border-stone-300/80">
+        {% for post in substack_posts %}
+          <li>
+            <a
+              href="{{ post.url }}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex flex-col gap-1 py-5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8"
+            >
+              <span class="font-display text-xl font-semibold tracking-tight text-ink-900 transition group-hover:underline group-hover:underline-offset-4 sm:text-2xl">
+                {{ post.title }}
+              </span>
+              {% if post.published_label %}
+                <time class="shrink-0 text-sm text-stone-500">{{ post.published_label }}</time>
+              {% endif %}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if substack_url %}
+        <p class="reveal-on-scroll mt-8">
+          <a
+            href="{{ substack_url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm font-semibold underline underline-offset-4"
+            style="color: var(--brand-primary)"
+          >
+            Browse the full archive on Substack →
+          </a>
+        </p>
+      {% endif %}
+    {% elif substack_url %}
+      <div class="reveal-on-scroll mt-10 border-t border-stone-300/80 pt-8">
+        <a
+          href="{{ substack_url }}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group inline-flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8"
+        >
+          <span class="font-display text-xl font-semibold tracking-tight text-ink-900 transition group-hover:underline group-hover:underline-offset-4 sm:text-2xl">
+            Read previous issues on Substack
+          </span>
+          <span class="shrink-0 text-sm font-semibold" style="color: var(--brand-primary)">Open Substack →</span>
+        </a>
+      </div>
+    {% elif previous_newsletters %}
       <ul class="reveal-on-scroll mt-10 divide-y divide-stone-200 border-t border-stone-300/80">
         {% for item in previous_newsletters %}
           {% set sent = item.sent_at or item.created_at %}
@@ -108,7 +145,7 @@
       </ul>
     {% else %}
       <p class="reveal-on-scroll mt-8 text-stone-600">
-        No previous issues yet — the first send will land here.
+        Add your Substack URL in Admin → Settings to show previous issues here.
       </p>
     {% endif %}
   </div>

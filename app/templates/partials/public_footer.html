@@ -54,7 +54,13 @@
         {% endif %}
       </ul>
       {% else %}
-      <p class="mt-3 text-sm text-stone-600">Essays and dispatches, delivered thoughtfully.</p>
+      <ul class="mt-3 space-y-2.5 text-sm text-stone-600">
+        <li>
+          <a class="transition hover:text-[var(--brand-primary)]" href="mailto:{{ config.CONTACT_EMAIL }}">
+            {{ config.CONTACT_EMAIL }}
+          </a>
+        </li>
+      </ul>
       {% endif %}
       <a href="{{ url_for('main.subscribe') }}"
         class="mt-5 inline-flex text-sm font-semibold underline decoration-[color-mix(in_srgb,var(--brand-primary)_40%,transparent)] underline-offset-4 hover:decoration-[var(--brand-primary)]"

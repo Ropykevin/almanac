@@ -95,5 +95,10 @@ class SiteSettingsForm(FlaskForm):
         "YouTube URL",
         validators=[Optional(), Length(max=255)],
     )
+    social_substack = StringField(
+        "Substack URL",
+        validators=[Optional(), Length(max=255)],
+        render_kw={"placeholder": "https://yourpublication.substack.com"},
+    )
 
     submit = SubmitField("Save settings")

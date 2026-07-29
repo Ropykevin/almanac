@@ -54,7 +54,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app import models  # noqa: F401
 
     app.logger.info(
-        "Almanac Africa AI started (config=%s)",
+        "Africa’s AI Almanac started (config=%s)",
         config_name,
     )
     return app

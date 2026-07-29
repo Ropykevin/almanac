@@ -96,7 +96,7 @@
     <div class="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <h2 class="text-sm font-semibold text-stone-900">Social links</h2>
       <div class="grid gap-4 sm:grid-cols-2">
-        {% for field in [form.social_twitter, form.social_linkedin, form.social_facebook, form.social_instagram, form.social_youtube] %}
+        {% for field in [form.social_twitter, form.social_linkedin, form.social_facebook, form.social_instagram, form.social_youtube, form.social_substack] %}
           <div class="space-y-1.5">
             {{ field.label(class="block text-sm font-medium text-stone-700") }}
             {{ field(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}

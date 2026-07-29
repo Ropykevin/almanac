@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{# Light editorial hero — brand + definition + headline + mission + CTAs #}
 <section class="home-hero">
   <div class="mx-auto max-w-3xl px-4 sm:px-6">
     <p class="home-def hero-reveal">
@@ -9,14 +8,14 @@
     </p>
     <h1
       class="home-headline hero-reveal-delay mt-8 font-display text-[clamp(2.75rem,6.5vw,4.25rem)] font-semibold leading-[1.1] tracking-tight text-ink-900">
-      Writing from the <em class="home-em">threshold</em> of artificial intelligence.
+      Ideas, analysis, and insight on AI governance across Africa.
     </h1>
     <p class="hero-reveal-delay-2 mt-7 max-w-2xl text-lg leading-relaxed text-stone-600 sm:text-xl">
       {% if site and site.description %}
       {{ site.description }}
       {% else %}
-      {{ site.name if site else config.APP_NAME }} is a publication watching the threshold where innovation meets
-      accountability — offering intellectual foresight into Africa’s evolving AI governance, and bridging the gap
+      {{ site.name if site else config.APP_NAME }} watches where innovation meets accountability —
+      offering intellectual foresight into Africa’s evolving AI governance, and bridging the gap
       between emerging technology and the policy that gives it a sovereign, digital future.
       {% endif %}
     </p>
@@ -33,7 +32,6 @@
   <div class="home-rule" aria-hidden="true"><span></span></div>
 </section>
 
-{# Three ways in #}
 <section class="home-ways">
   <div class="home-rule home-rule--top" aria-hidden="true"><span></span></div>
   <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
@@ -43,15 +41,14 @@
         Three ways in.
       </h2>
       <p class="mt-4 text-lg leading-relaxed text-stone-600 sm:text-xl">
-        Everything {{ site.name if site else config.APP_NAME }} publishes lives in one of three places — a rhythm of
-        dispatches, arguments, and the living work behind them.
+        Everything in Africa’s AI Almanac begins in one of three places: a monthly dispatch, essays that develop ideas, and research projects.
       </p>
     </div>
 
     <div class="reveal-on-scroll home-ways__grid mt-12">
       <a href="{{ url_for('main.subscribe') }}" class="home-ways__col group">
         <p class="home-ways__label">01 / Newsletter</p>
-        <h3 class="home-ways__title">The dispatch</h3>
+        <h3 class="home-ways__title">Monthly dispatch</h3>
         <p class="home-ways__body">
           Regular notes on where AI actually is this week — the releases that matter and the ones that don’t — sent
           straight to your inbox.
@@ -59,7 +56,7 @@
       </a>
       <a href="{{ url_for('main.archive') }}" class="home-ways__col group">
         <p class="home-ways__label">02 / Blog</p>
-        <h3 class="home-ways__title">The essays</h3>
+        <h3 class="home-ways__title">Essays</h3>
         <p class="home-ways__body">
           Longer writing and arguments: the ideas that need more room than a dispatch, worked through slowly and in the
           open.
@@ -67,7 +64,7 @@
       </a>
       <a href="{{ url_for('main.projects') }}" class="home-ways__col group">
         <p class="home-ways__label">03 / Projects</p>
-        <h3 class="home-ways__title">Research ongoing</h3>
+        <h3 class="home-ways__title">Ongoing research</h3>
         <p class="home-ways__body">
           Ongoing research we maintain and update over time, not one-off posts — reference you can return to as the
           field moves.
@@ -79,10 +76,9 @@
 
 {% include "partials/projects_tracking.html" %}
 
-{# Subscribe band #}
 <section class="home-subscribe" id="subscribe">
   <div class="mx-auto max-w-xl px-4 py-16 sm:px-6 sm:py-24">
-    <p class="page-kicker reveal-on-scroll">Stay on the threshold</p>
+    <p class="page-kicker reveal-on-scroll">Stay up-to-date</p>
     <h2
       class="public-section-title reveal-on-scroll mt-4 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
       Get the Newsletter, <em class="home-em-soft">free.</em>

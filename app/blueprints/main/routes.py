@@ -237,8 +237,8 @@ def projects():
         projects=project_service.list_published_projects_ordered(),
         active_nav="projects",
         seo=seo_service.default_seo_context(
-            title="Projects — Research ongoing",
-            description="Live inquiries into African AI governance, infrastructure, and public interest technology.",
+            title="Projects — Ongoing research",
+            description="Inquiries into African AI governance, infrastructure and AI in society across Africa.",
             path_endpoint="main.projects",
         ),
     )
@@ -319,15 +319,25 @@ def subscribe():
         return redirect(url_for("main.subscribe"))
 
     from app.services import newsletters as newsletter_service
+    from app.services import site_settings as site_settings_service
+    from app.services import substack as substack_service
+
+    site = site_settings_service.get_site_settings()
+    substack_url = site.substack_archive_url if site else None
+    substack_posts = (
+        substack_service.fetch_recent_posts(substack_url, limit=12) if substack_url else []
+    )
 
     return render_template(
         "main/subscribe.html",
         form=form,
         previous_newsletters=newsletter_service.list_sent_newsletters(limit=12),
+        substack_url=substack_url,
+        substack_posts=substack_posts,
         active_nav="subscribe",
         seo=seo_service.default_seo_context(
             title="Subscribe",
-            description="Subscribe to essays and dispatches from the publication.",
+            description="Subscribe to get full access to the latest Newsletter.",
             path_endpoint="main.subscribe",
         ),
     )
@@ -363,7 +373,7 @@ def newsletter_detail(newsletter_id: str):
         active_nav="subscribe",
         seo=seo_service.default_seo_context(
             title=newsletter.subject,
-            description="Previously sent newsletter from Almanac Africa AI.",
+            description="Previously sent newsletter from Africa’s AI Almanac.",
             path_endpoint="main.newsletter_detail",
             newsletter_id=str(newsletter.id),
         ),
@@ -376,7 +386,7 @@ def verify_subscription(token: str):
     if subscriber is None:
         flash("That confirmation link is invalid or has already been used.", "error")
         return redirect(url_for("main.subscribe"))
-    flash("Subscription confirmed. Welcome to Almanac Africa AI.", "success")
+    flash("Subscription confirmed. Welcome to Africa’s AI Almanac.", "success")
     return redirect(url_for("main.index"))
 
 

@@ -19,7 +19,10 @@ class Config:
     """Base configuration shared by all environments."""
 
     SECRET_KEY = _env("SECRET_KEY", "dev-only-change-me")
-    APP_NAME = "Almanac Africa AI"
+    APP_NAME = "Africa’s AI Almanac"
+    CONTACT_EMAIL = _env("CONTACT_EMAIL", "hello@almanac.africa")
+    SUBSTACK_URL = (_env("SUBSTACK_URL") or "").rstrip("/")
+    SUBSTACK_ARCHIVE_URL = (_env("SUBSTACK_ARCHIVE_URL") or "").rstrip("/") or None
 
     # SQLAlchemy / PostgreSQL
     SQLALCHEMY_DATABASE_URI = _env(

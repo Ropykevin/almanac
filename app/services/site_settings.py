@@ -27,7 +27,7 @@ SETTING_DEFAULTS: dict[str, str] = {
         "of technology, policy, and culture."
     ),
     "footer_copyright": "",
-    "contact_email": "",
+    "contact_email": "hello@almanac.africa",
     "contact_phone": "",
     "contact_address": "",
     "social_twitter": "",
@@ -35,6 +35,7 @@ SETTING_DEFAULTS: dict[str, str] = {
     "social_facebook": "",
     "social_instagram": "",
     "social_youtube": "",
+    "social_substack": "",
     "theme_primary_color": "#0f766e",
 }
 
@@ -58,6 +59,7 @@ class SiteSettings:
     social_facebook: str
     social_instagram: str
     social_youtube: str
+    social_substack: str
     primary_color: str
     logo_url: str | None = None
     logo_id: str | None = None
@@ -69,6 +71,20 @@ class SiteSettings:
         if self.footer_copyright.strip():
             return self.footer_copyright.strip()
         return f"© {self.name}"
+
+    @property
+    def substack_archive_url(self) -> str | None:
+        from flask import current_app
+
+        url = (self.social_substack or "").strip()
+        if url:
+            return url.rstrip("/")
+        configured = (
+            current_app.config.get("SUBSTACK_ARCHIVE_URL")
+            or current_app.config.get("SUBSTACK_URL")
+            or ""
+        ).strip()
+        return configured.rstrip("/") or None
 
 
 class SettingsError(ValueError):
@@ -119,6 +135,7 @@ def _social_links(kv: dict[str, str]) -> list[dict[str, str]]:
         ("social_facebook", "Facebook", "facebook"),
         ("social_instagram", "Instagram", "instagram"),
         ("social_youtube", "YouTube", "youtube"),
+        ("social_substack", "Substack", "substack"),
     ]
     links = []
     for key, label, network in mapping:
@@ -154,7 +171,10 @@ def get_site_settings() -> SiteSettings:
         home_welcome=kv.get("home_welcome", SETTING_DEFAULTS["home_welcome"]),
         footer_blurb=kv.get("footer_blurb", SETTING_DEFAULTS["footer_blurb"]),
         footer_copyright=kv.get("footer_copyright", ""),
-        contact_email=kv.get("contact_email", ""),
+        contact_email=(
+            kv.get("contact_email")
+            or SETTING_DEFAULTS["contact_email"]
+        ),
         contact_phone=kv.get("contact_phone", ""),
         contact_address=kv.get("contact_address", ""),
         social_twitter=kv.get("social_twitter", ""),
@@ -162,6 +182,7 @@ def get_site_settings() -> SiteSettings:
         social_facebook=kv.get("social_facebook", ""),
         social_instagram=kv.get("social_instagram", ""),
         social_youtube=kv.get("social_youtube", ""),
+        social_substack=kv.get("social_substack", ""),
         primary_color=primary,
         logo_url=_media_url(publication.logo),
         logo_id=str(publication.logo_id) if publication.logo_id else None,
@@ -203,6 +224,7 @@ def save_site_settings_from_form(form, *, uploader) -> SiteSettings:
         "social_facebook": form.social_facebook.data,
         "social_instagram": form.social_instagram.data,
         "social_youtube": form.social_youtube.data,
+        "social_substack": form.social_substack.data,
         "theme_primary_color": color,
     }
     for key, value in kv_fields.items():

@@ -197,7 +197,7 @@ def build_campaign_html(
     """Render the responsive newsletter HTML shell."""
     from flask import current_app
 
-    app_name = current_app.config.get("APP_NAME", "Almanac Africa AI")
+    app_name = current_app.config.get("APP_NAME", "Africa’s AI Almanac")
     if article is not None:
         headline = article.title
         dek = article.excerpt or article.subtitle or ""

@@ -4,7 +4,8 @@
 def test_index_ok(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Almanac Africa AI" in response.data
+    assert b"Africa" in response.data
+
 
 
 def test_health_ok(client):

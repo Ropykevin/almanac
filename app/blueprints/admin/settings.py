@@ -47,6 +47,7 @@ def site_settings():
         form.social_instagram.data = current.social_instagram
         form.social_youtube.data = current.social_youtube
         form.social_substack.data = current.social_substack
+        form.google_site_verification.data = current.google_site_verification
 
     return render_template(
         "admin/settings/form.html",

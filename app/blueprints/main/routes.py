@@ -36,6 +36,7 @@ def index():
 
     seo = seo_service.default_seo_context(
         title=current_app.config.get("APP_NAME"),
+        description=seo_service.DEFAULT_META_DESCRIPTION,
         include_website_json_ld=True,
     )
     seo["page_title"] = current_app.config.get("APP_NAME")

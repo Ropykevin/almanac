@@ -5,7 +5,7 @@
 {% block admin_content %}
 <section class="mx-auto max-w-3xl space-y-6">
   <p class="text-sm text-stone-500">
-    Manage branding, homepage welcome, footer copy, contact details, social links, and theme color.
+    Manage branding, homepage welcome, footer copy, contact details, social links, SEO, and theme color.
   </p>
 
   <form method="post" enctype="multipart/form-data" novalidate class="space-y-6">
@@ -103,6 +103,26 @@
           </div>
         {% endfor %}
       </div>
+    </div>
+
+    <div class="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <h2 class="text-sm font-semibold text-stone-900">Search &amp; SEO</h2>
+      <p class="text-sm text-stone-500">
+        For Google Search Console HTML-tag verification, paste only the
+        <code class="rounded bg-stone-100 px-1 py-0.5 text-xs">content</code>
+        value (not the full meta tag). Prefer DNS verification when you can —
+        that does not need this field.
+      </p>
+      <div class="space-y-1.5">
+        {{ form.google_site_verification.label(class="block text-sm font-medium text-stone-700") }}
+        {{ form.google_site_verification(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 font-mono text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+        {% for error in form.google_site_verification.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+      </div>
+      <ul class="space-y-1 text-sm text-stone-600">
+        <li>Sitemap: <a class="font-medium underline underline-offset-2" href="{{ url_for('main.sitemap', _external=True) }}" target="_blank" rel="noopener">{{ url_for('main.sitemap', _external=True) }}</a></li>
+        <li>Robots: <a class="font-medium underline underline-offset-2" href="{{ url_for('main.robots', _external=True) }}" target="_blank" rel="noopener">{{ url_for('main.robots', _external=True) }}</a></li>
+        <li>RSS: <a class="font-medium underline underline-offset-2" href="{{ url_for('main.rss_feed', _external=True) }}" target="_blank" rel="noopener">{{ url_for('main.rss_feed', _external=True) }}</a></li>
+      </ul>
     </div>
 
     {{ form.submit(class="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800") }}

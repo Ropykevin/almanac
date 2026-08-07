@@ -21,6 +21,8 @@ class Config:
     SECRET_KEY = _env("SECRET_KEY", "dev-only-change-me")
     APP_NAME = "Africa’s AI Almanac"
     CONTACT_EMAIL = _env("CONTACT_EMAIL", "hello@almanac.africa")
+    # Google Search Console HTML-tag verification token (content= value only)
+    GOOGLE_SITE_VERIFICATION = (_env("GOOGLE_SITE_VERIFICATION") or "").strip()
     SUBSTACK_URL = (_env("SUBSTACK_URL") or "").rstrip("/")
     SUBSTACK_ARCHIVE_URL = (_env("SUBSTACK_ARCHIVE_URL") or "").rstrip("/") or None
 

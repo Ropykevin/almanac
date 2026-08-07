@@ -101,4 +101,20 @@ class SiteSettingsForm(FlaskForm):
         render_kw={"placeholder": "https://yourpublication.substack.com"},
     )
 
+    google_site_verification = StringField(
+        "Google site verification",
+        validators=[
+            Optional(),
+            Length(max=120),
+            Regexp(
+                r"^$|^[A-Za-z0-9_-]+$",
+                message="Use only the verification content token (letters, numbers, _ or -).",
+            ),
+        ],
+        render_kw={
+            "placeholder": "Paste the content value from Google Search Console",
+            "autocomplete": "off",
+        },
+    )
+
     submit = SubmitField("Save settings")

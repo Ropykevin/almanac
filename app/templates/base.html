@@ -4,8 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% if seo is defined and seo %}{{ seo.page_title }}{% else %}{{ config.APP_NAME }}{% endif %}{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}{% if seo is defined and seo %}{{ seo.meta_description }}{% else %}African intelligence, reported with clarity — stories at the edge of technology, culture, and power.{% endif %}{% endblock %}">
+  <meta name="description" content="{% block meta_description %}{% if seo is defined and seo %}{{ seo.meta_description }}{% else %}Ideas, analysis, and insight on AI governance across Africa.{% endif %}{% endblock %}">
   <meta name="robots" content="{% block meta_robots %}index,follow{% endblock %}">
+  {% set google_verify = (site.google_verification_token if site else none) or config.GOOGLE_SITE_VERIFICATION %}
+  {% if google_verify %}
+  <meta name="google-site-verification" content="{{ google_verify }}">
+  {% endif %}
   {% include "seo/_meta_tags.html" %}
   {% set brand_color = (site.primary_color if site and site.primary_color else '#0f766e') %}
   <style>

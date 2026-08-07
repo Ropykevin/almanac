@@ -36,6 +36,7 @@ SETTING_DEFAULTS: dict[str, str] = {
     "social_instagram": "",
     "social_youtube": "",
     "social_substack": "",
+    "google_site_verification": "",
     "theme_primary_color": "#0f766e",
 }
 
@@ -60,6 +61,7 @@ class SiteSettings:
     social_instagram: str
     social_youtube: str
     social_substack: str
+    google_site_verification: str
     primary_color: str
     logo_url: str | None = None
     logo_id: str | None = None
@@ -71,6 +73,17 @@ class SiteSettings:
         if self.footer_copyright.strip():
             return self.footer_copyright.strip()
         return f"© {self.name}"
+
+    @property
+    def google_verification_token(self) -> str | None:
+        """Search Console HTML-tag token from settings or GOOGLE_SITE_VERIFICATION."""
+        from flask import current_app
+
+        token = (self.google_site_verification or "").strip()
+        if token:
+            return token
+        configured = (current_app.config.get("GOOGLE_SITE_VERIFICATION") or "").strip()
+        return configured or None
 
     @property
     def substack_archive_url(self) -> str | None:
@@ -183,6 +196,7 @@ def get_site_settings() -> SiteSettings:
         social_instagram=kv.get("social_instagram", ""),
         social_youtube=kv.get("social_youtube", ""),
         social_substack=kv.get("social_substack", ""),
+        google_site_verification=kv.get("google_site_verification", ""),
         primary_color=primary,
         logo_url=_media_url(publication.logo),
         logo_id=str(publication.logo_id) if publication.logo_id else None,
@@ -225,6 +239,7 @@ def save_site_settings_from_form(form, *, uploader) -> SiteSettings:
         "social_instagram": form.social_instagram.data,
         "social_youtube": form.social_youtube.data,
         "social_substack": form.social_substack.data,
+        "google_site_verification": form.google_site_verification.data,
         "theme_primary_color": color,
     }
     for key, value in kv_fields.items():

@@ -85,3 +85,25 @@ def test_full_text_search(client, app):
     response2 = client.get("/search?q=African%20research")
     assert response2.status_code == 200
     assert b"Lagos Models" in response2.data
+
+
+def test_google_site_verification_meta(client, app):
+    app.config["GOOGLE_SITE_VERIFICATION"] = "test-google-token_123"
+    response = client.get("/")
+    assert response.status_code == 200
+    html = response.data.decode()
+    assert 'name="google-site-verification"' in html
+    assert 'content="test-google-token_123"' in html
+    assert "WebSite" in html
+    assert "Organization" in html
+    assert "Ideas, analysis, and insight on AI governance across Africa." in html
+
+
+def test_homepage_has_canonical_and_sitemap_linked(client):
+    home = client.get("/")
+    assert home.status_code == 200
+    assert b'rel="canonical"' in home.data
+
+    robots = client.get("/robots.txt")
+    assert robots.status_code == 200
+    assert b"/sitemap.xml" in robots.data

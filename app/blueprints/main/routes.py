@@ -248,15 +248,32 @@ def projects():
 @main_bp.route("/projects/<slug>")
 def project_detail(slug: str):
     from app.services import projects as project_service
+    from app.services.media import media_kind, media_public_url
     from app.utils.html_sanitize import sanitize_article_html
 
     project = project_service.get_published_project_by_slug(slug)
     if project is None:
         abort(404)
+
+    documents = []
+    for document in project_service.list_project_documents(project):
+        media = document.media
+        if media is None:
+            continue
+        documents.append(
+            {
+                "title": document.display_title,
+                "url": media_public_url(media),
+                "kind": media_kind(media),
+                "size_label": project_service.format_file_size(media.size),
+            }
+        )
+
     return render_template(
         "main/project_detail.html",
         project=project,
         project_body_html=sanitize_article_html(project.body),
+        project_documents=documents,
         active_nav="projects",
         seo=seo_service.default_seo_context(
             title=project.title,

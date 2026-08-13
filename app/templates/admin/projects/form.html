@@ -6,6 +6,9 @@
 <section class="mx-auto max-w-xl space-y-6">
   <p class="text-sm text-stone-500">
     Projects appear in “What we’re tracking” when marked public. Each has a public page readers can open.
+    {% if project and project.is_published %}
+      <a href="{{ url_for('main.project_detail', slug=project.slug) }}" class="font-medium underline underline-offset-2" target="_blank" rel="noopener">View public page</a>
+    {% endif %}
   </p>
 
   <form method="post" novalidate class="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
@@ -58,5 +61,60 @@
       </a>
     </div>
   </form>
+
+  {% if project and document_form %}
+  <div class="space-y-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div>
+      <h2 class="text-sm font-semibold text-stone-900">Documents</h2>
+      <p class="mt-1 text-sm text-stone-500">
+        Upload PDFs, Word files, spreadsheets, or images for this project. Readers can download them from the public project page.
+      </p>
+    </div>
+
+    {% if documents %}
+    <ul class="divide-y divide-stone-200 border-y border-stone-200">
+      {% for doc in documents %}
+      <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+        <div class="min-w-0">
+          {% if doc.url %}
+          <a href="{{ doc.url }}" target="_blank" rel="noopener" class="font-medium text-stone-900 underline-offset-2 hover:underline">
+            {{ doc.title }}
+          </a>
+          {% else %}
+          <span class="font-medium text-stone-900">{{ doc.title }}</span>
+          {% endif %}
+          <p class="mt-0.5 text-xs text-stone-500">
+            {{ doc.kind|capitalize }}{% if doc.size_label %} · {{ doc.size_label }}{% endif %}
+            {% if doc.original_name and doc.original_name != doc.title %} · {{ doc.original_name }}{% endif %}
+          </p>
+        </div>
+        <form method="post" action="{{ url_for('admin.project_document_delete', project_id=project.id, document_id=doc.id) }}" onsubmit="return confirm('Remove this document?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50">
+            Remove
+          </button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-stone-500">No documents uploaded yet.</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('admin.project_document_upload', project_id=project.id) }}" enctype="multipart/form-data" novalidate class="space-y-4 border-t border-stone-200 pt-5">
+      {{ document_form.hidden_tag() }}
+      <div class="space-y-1.5">
+        {{ document_form.file.label(class="block text-sm font-medium text-stone-700") }}
+        {{ document_form.file(class="block w-full text-sm text-stone-600 file:mr-3 file:rounded-md file:border-0 file:bg-brand-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white") }}
+        {% for error in document_form.file.errors %}<p class="text-sm text-rose-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="space-y-1.5">
+        {{ document_form.title.label(class="block text-sm font-medium text-stone-700") }}
+        {{ document_form.title(class="block w-full rounded-md border border-stone-300 px-3 py-2.5 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15") }}
+      </div>
+      {{ document_form.submit(class="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800") }}
+    </form>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}

@@ -21,7 +21,7 @@ from app.models.enums import (
 )
 from app.models.media import Media
 from app.models.newsletter import Newsletter, NewsletterDelivery, Subscriber
-from app.models.project import Project
+from app.models.project import Project, ProjectDocument
 from app.models.publication import Publication, PublicationUser
 from app.models.settings import Setting
 from app.models.taxonomy import Category, Tag
@@ -44,6 +44,7 @@ __all__ = [
     "NewsletterDelivery",
     "NewsletterStatus",
     "Project",
+    "ProjectDocument",
     "ProjectStatus",
     "Publication",
     "PublicationUser",

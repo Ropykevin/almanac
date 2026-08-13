@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -14,6 +14,7 @@ from app.models.base import created_at_col, pg_enum, updated_at_col, uuid_pk
 from app.models.enums import ProjectStatus
 
 if TYPE_CHECKING:
+    from app.models.media import Media
     from app.models.publication import Publication
 
 
@@ -47,6 +48,12 @@ class Project(db.Model):
     updated_at: Mapped[datetime] = updated_at_col()
 
     publication: Mapped["Publication"] = relationship("Publication")
+    documents: Mapped[list["ProjectDocument"]] = relationship(
+        "ProjectDocument",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        order_by="ProjectDocument.sort_order.asc(), ProjectDocument.created_at.asc()",
+    )
 
     @property
     def status_label(self) -> str:
@@ -56,3 +63,40 @@ class Project(db.Model):
 
     def __repr__(self) -> str:
         return f"<Project {self.title!r}>"
+
+
+class ProjectDocument(db.Model):
+    """A downloadable file attached to a research project."""
+
+    __tablename__ = "project_documents"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    media_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        ForeignKey("media.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[Optional[str]] = mapped_column(String(255))
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = created_at_col()
+
+    project: Mapped["Project"] = relationship("Project", back_populates="documents")
+    media: Mapped["Media"] = relationship("Media")
+
+    @property
+    def display_title(self) -> str:
+        if self.title and self.title.strip():
+            return self.title.strip()
+        if self.media is not None and self.media.original_name:
+            return self.media.original_name
+        return "Document"
+
+    def __repr__(self) -> str:
+        return f"<ProjectDocument {self.display_title!r}>"

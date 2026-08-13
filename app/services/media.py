@@ -286,6 +286,8 @@ def update_media_meta(media: Media, *, alt_text: str | None, commit: bool = True
 
 def delete_media(media: Media) -> None:
     """Delete media row and file; clear FK references first."""
+    from app.models import ProjectDocument
+
     # Clear optional references so delete is not blocked
     for article in list(media.featured_in_articles):
         article.featured_image = None
@@ -300,6 +302,11 @@ def delete_media(media: Media) -> None:
     ).all()
     for user in users:
         user.avatar_id = None
+
+    for document in db.session.scalars(
+        select(ProjectDocument).where(ProjectDocument.media_id == media.id)
+    ).all():
+        db.session.delete(document)
 
     disk_path = _absolute_path(media)
     name = media.original_name

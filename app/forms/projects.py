@@ -1,9 +1,11 @@
 """Admin project forms."""
 
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import BooleanField, IntegerField, SelectField, StringField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional
 
+from app.forms.media import ALL_EXTS
 from app.models.enums import ProjectStatus
 from app.utils.slug import slugify
 
@@ -49,3 +51,19 @@ class ProjectForm(FlaskForm):
     def validate_slug(self, field):
         if field.data:
             field.data = slugify(field.data)
+
+
+class ProjectDocumentForm(FlaskForm):
+    file = FileField(
+        "Document",
+        validators=[
+            FileRequired(),
+            FileAllowed(ALL_EXTS, "Images, PDFs, or documents only."),
+        ],
+    )
+    title = StringField(
+        "Display title",
+        validators=[Optional(), Length(max=255)],
+        render_kw={"placeholder": "Optional — defaults to the file name"},
+    )
+    submit = SubmitField("Upload document")

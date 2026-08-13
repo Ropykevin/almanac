@@ -104,21 +104,26 @@ def save_project_from_form(form, *, project: Project | None = None) -> Project:
     publication = get_or_create_default_publication()
     created = project is None
     if project is None:
+        # Do not add() until required fields (especially slug) are set —
+        # unique_project_slug() queries and would autoflush a null slug.
         project = Project(publication_id=publication.id)
-        db.session.add(project)
 
     project.title = title[:255]
-    project.slug = unique_project_slug(
-        publication.id,
-        title,
-        desired=desired_slug,
-        exclude_id=None if created else project.id,
-    )
     project.description = description
     project.body = sanitize_article_html(body) if body else None
     project.status = status
     project.sort_order = sort_order
     project.is_published = bool(form.is_published.data)
+    with db.session.no_autoflush:
+        project.slug = unique_project_slug(
+            publication.id,
+            title,
+            desired=desired_slug,
+            exclude_id=None if created else project.id,
+        )
+
+    if created:
+        db.session.add(project)
 
     log_activity(
         "project.created" if created else "project.updated",

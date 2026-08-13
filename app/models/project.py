@@ -52,7 +52,7 @@ class Project(db.Model):
         "ProjectDocument",
         back_populates="project",
         cascade="all, delete-orphan",
-        order_by="ProjectDocument.sort_order.asc(), ProjectDocument.created_at.asc()",
+        order_by="ProjectDocument.sort_order",
     )
 
     @property

@@ -14,6 +14,7 @@ from app.models.base import created_at_col, pg_enum, updated_at_col, uuid_pk
 from app.models.enums import ProjectStatus
 
 if TYPE_CHECKING:
+    from app.models.article import Article
     from app.models.media import Media
     from app.models.publication import Publication
 
@@ -53,6 +54,11 @@ class Project(db.Model):
         back_populates="project",
         cascade="all, delete-orphan",
         order_by="ProjectDocument.sort_order",
+    )
+    articles: Mapped[list["Article"]] = relationship(
+        "Article",
+        back_populates="project",
+        foreign_keys="Article.project_id",
     )
 
     @property

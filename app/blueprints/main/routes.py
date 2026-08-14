@@ -274,6 +274,7 @@ def project_detail(slug: str):
         project=project,
         project_body_html=sanitize_article_html(project.body),
         project_documents=documents,
+        project_articles=project_service.list_published_articles_for_project(project),
         active_nav="projects",
         seo=seo_service.default_seo_context(
             title=project.title,

@@ -108,6 +108,13 @@ class ArticleForm(FlaskForm):
         coerce=str,
         validators=[Optional()],
     )
+    project_id = SelectField(
+        "Project",
+        coerce=str,
+        validators=[Optional()],
+        choices=[("", "— None —")],
+        default="",
+    )
     featured = BooleanField("Featured article")
     allow_comments = BooleanField("Allow comments", default=True)
     submit = SubmitField("Save article")

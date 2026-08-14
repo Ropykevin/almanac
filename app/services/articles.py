@@ -56,6 +56,7 @@ def get_article(article_id: uuid.UUID) -> Article | None:
             joinedload(Article.featured_image_media),
             joinedload(Article.categories),
             joinedload(Article.tags),
+            joinedload(Article.project),
         )
         .where(Article.id == article_id)
     )
@@ -70,6 +71,28 @@ def _parse_uuid_list(values: list[str] | None) -> list[uuid.UUID]:
         except (TypeError, ValueError):
             continue
     return ids
+
+
+def sync_article_project(article: Article, form: ArticleForm) -> None:
+    """Attach or detach the article from a research project."""
+    from app.models import Project
+
+    raw = (form.project_id.data or "").strip()
+    if not raw:
+        article.project_id = None
+        return
+    try:
+        project_id = uuid.UUID(raw)
+    except (TypeError, ValueError):
+        article.project_id = None
+        return
+    project = db.session.scalar(
+        select(Project).where(
+            Project.id == project_id,
+            Project.publication_id == article.publication_id,
+        )
+    )
+    article.project_id = project.id if project is not None else None
 
 
 def sync_article_taxonomy(article: Article, form: ArticleForm) -> None:
@@ -197,6 +220,7 @@ def save_article_from_form(
             article.featured_image = media.id
 
     sync_article_taxonomy(article, form)
+    sync_article_project(article, form)
     apply_status_timestamps(article)
     log_activity(
         "article.created" if is_new else "article.updated",

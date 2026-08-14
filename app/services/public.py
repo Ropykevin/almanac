@@ -16,6 +16,7 @@ def _published_options():
         joinedload(Article.categories),
         joinedload(Article.tags),
         joinedload(Article.publication),
+        joinedload(Article.project),
     )
 
 

@@ -231,6 +231,24 @@ def delete_project_document(document: ProjectDocument) -> None:
         delete_media(media)
 
 
+def list_published_articles_for_project(project: Project) -> list:
+    """Published essays attached to a project, newest first."""
+    from app.models import Article
+    from app.models.enums import ArticleStatus
+
+    return list(
+        db.session.scalars(
+            select(Article)
+            .options(joinedload(Article.author))
+            .where(
+                Article.project_id == project.id,
+                Article.status == ArticleStatus.PUBLISHED,
+            )
+            .order_by(Article.published_at.desc(), Article.created_at.desc())
+        ).all()
+    )
+
+
 def document_public_url(document: ProjectDocument) -> str | None:
     if document.media is None:
         return None

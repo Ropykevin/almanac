@@ -47,6 +47,17 @@
           {% endfor %}
         </div>
       {% endif %}
+
+      {% if article.project and article.project.is_published %}
+        <p class="reveal-on-scroll mt-5 text-sm text-stone-600">
+          Part of
+          <a
+            href="{{ url_for('main.project_detail', slug=article.project.slug) }}"
+            class="font-semibold underline underline-offset-4"
+            style="color: var(--brand-primary)"
+          >{{ article.project.title }}</a>
+        </p>
+      {% endif %}
     </div>
 
     {% if article.featured_image_media %}

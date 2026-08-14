@@ -25,6 +25,7 @@ from app.models.enums import ArticleStatus
 if TYPE_CHECKING:
     from app.models.media import Media
     from app.models.newsletter import Newsletter
+    from app.models.project import Project
     from app.models.publication import Publication
     from app.models.taxonomy import Category, Tag
     from app.models.user import User
@@ -47,6 +48,12 @@ class Article(db.Model):
         Uuid,
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
+        index=True,
+    )
+    project_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid,
+        ForeignKey("projects.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -85,6 +92,11 @@ class Article(db.Model):
         "User",
         back_populates="articles",
         foreign_keys=[author_id],
+    )
+    project: Mapped[Optional["Project"]] = relationship(
+        "Project",
+        back_populates="articles",
+        foreign_keys=[project_id],
     )
     featured_image_media: Mapped[Optional["Media"]] = relationship(
         "Media",

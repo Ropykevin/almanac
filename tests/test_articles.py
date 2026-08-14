@@ -145,3 +145,54 @@ def test_preview_and_filters(client, editor, app):
     drafts = client.get("/admin/articles?status=DRAFT")
     assert drafts.status_code == 200
     assert b"Preview Me" in drafts.data
+
+
+def test_attach_article_to_project(client, editor, app):
+    from app.models import Project
+    from app.models.enums import ProjectStatus
+    from app.services.publications import get_or_create_default_publication
+
+    _login(client)
+
+    with app.app_context():
+        publication = get_or_create_default_publication()
+        project = Project(
+            publication_id=publication.id,
+            title="Governance Tracker",
+            slug="governance-tracker",
+            description="Tracking AI policy.",
+            status=ProjectStatus.LIVE,
+            is_published=True,
+            sort_order=0,
+        )
+        db.session.add(project)
+        db.session.commit()
+        project_id = str(project.id)
+
+    created = client.post(
+        "/admin/articles/new",
+        data={
+            "title": "Policy Memo",
+            "content": "<p>Linked essay.</p>",
+            "status": "PUBLISHED",
+            "project_id": project_id,
+            "allow_comments": True,
+            "submit": "Save article",
+        },
+        follow_redirects=True,
+    )
+    assert created.status_code == 200
+
+    with app.app_context():
+        article = Article.query.filter_by(slug="policy-memo").one()
+        assert str(article.project_id) == project_id
+        assert article.status == ArticleStatus.PUBLISHED
+
+    public = client.get("/projects/governance-tracker")
+    assert public.status_code == 200
+    assert b"Related essays" in public.data
+    assert b"Policy Memo" in public.data
+
+    article_page = client.get("/article/policy-memo")
+    assert article_page.status_code == 200
+    assert b"Governance Tracker" in article_page.data

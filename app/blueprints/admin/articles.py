@@ -27,9 +27,19 @@ def _parse_uuid(value: str) -> uuid.UUID:
 
 
 def _bind_taxonomy_choices(form: ArticleForm, publication_id: uuid.UUID) -> None:
+    from app.services import projects as project_service
+
     categories, tags = taxonomy_service.taxonomy_choices(publication_id)
     form.categories.choices = categories
     form.tags.choices = tags
+    form.project_id.choices = [
+        ("", "— None —"),
+        *[
+            (str(project.id), project.title)
+            for project in project_service.list_projects_admin()
+            if project.publication_id == publication_id
+        ],
+    ]
 
 
 def _populate_form(form: ArticleForm, article) -> None:
@@ -49,6 +59,7 @@ def _populate_form(form: ArticleForm, article) -> None:
     form.scheduled_at.data = _to_local_naive(article.scheduled_at)
     form.categories.data = [str(c.id) for c in article.categories]
     form.tags.data = [str(t.id) for t in article.tags]
+    form.project_id.data = str(article.project_id) if article.project_id else ""
 
 
 def _to_local_naive(value: datetime | None) -> datetime | None:

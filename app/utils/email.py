@@ -14,6 +14,41 @@ logger = logging.getLogger(__name__)
 _TAG_RE = re.compile(r"<[^>]+>")
 
 
+class MailNotConfiguredError(RuntimeError):
+    """Raised when a real SMTP send is required but MAIL_SERVER is unset."""
+
+
+def mail_is_configured() -> bool:
+    """True when MAIL_SERVER is set so messages leave the app over SMTP."""
+    server = (current_app.config.get("MAIL_SERVER") or "").strip()
+    if not server:
+        return False
+    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+    # Login credentials are optional for open relays; if a username is set,
+    # require a password so half-configured Zoho setups don't look "active".
+    if username and not password:
+        return False
+    return True
+
+
+def mail_status() -> dict[str, str | bool]:
+    """Admin-facing snapshot of outbound mail config (no secrets)."""
+    server = (current_app.config.get("MAIL_SERVER") or "").strip()
+    sender = (current_app.config.get("MAIL_DEFAULT_SENDER") or "").strip()
+    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+    configured = mail_is_configured()
+    return {
+        "configured": configured,
+        "server": server,
+        "sender": sender or username,
+        "username": username,
+        "port": str(current_app.config.get("MAIL_PORT") or 587),
+        "needs_password": bool(username and not password),
+    }
+
+
 def html_to_plain(html: str) -> str:
     text = _TAG_RE.sub(" ", html or "")
     return re.sub(r"\s+", " ", text).strip()
@@ -25,9 +60,16 @@ def _send_email(
     subject: str,
     body: str,
     html_body: str | None = None,
+    require_smtp: bool = False,
 ) -> None:
-    mail_server = current_app.config.get("MAIL_SERVER")
+    mail_server = (current_app.config.get("MAIL_SERVER") or "").strip()
     if not mail_server:
+        if require_smtp:
+            raise MailNotConfiguredError(
+                "SMTP is not configured. Set MAIL_SERVER (and usually "
+                "MAIL_USERNAME / MAIL_PASSWORD / MAIL_DEFAULT_SENDER) in .env, "
+                "then restart the app."
+            )
         preview = html_body or body
         current_app.logger.info(
             "Email to %s (SMTP not configured — body logged):\nSubject: %s\n%s",
@@ -96,11 +138,22 @@ def send_unsubscribe_confirmation_email(to_email: str) -> None:
     _send_email(to_email=to_email, subject=subject, body=body)
 
 
-def send_html_email(*, to_email: str, subject: str, html_body: str) -> None:
-    """Send an HTML newsletter (plain-text fallback derived from HTML)."""
+def send_html_email(
+    *,
+    to_email: str,
+    subject: str,
+    html_body: str,
+    require_smtp: bool = True,
+) -> None:
+    """Send an HTML newsletter (plain-text fallback derived from HTML).
+
+    Newsletter campaigns require SMTP by default so “sent” means delivered,
+    not merely logged.
+    """
     _send_email(
         to_email=to_email,
         subject=subject,
         body=html_to_plain(html_body) or subject,
         html_body=html_body,
+        require_smtp=require_smtp,
     )

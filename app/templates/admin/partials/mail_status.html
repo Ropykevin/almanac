@@ -1,0 +1,26 @@
+{# Expects `mail` from context processor. #}
+{% if mail is defined and mail %}
+  {% if mail.configured %}
+  <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+    <p class="font-semibold">Outbound mail is active</p>
+    <p class="mt-1 text-emerald-800/90">
+      SMTP {{ mail.server }}:{{ mail.port }}
+      {% if mail.sender %} · from {{ mail.sender }}{% endif %}
+    </p>
+  </div>
+  {% else %}
+  <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+    <p class="font-semibold">Outbound mail is not configured</p>
+    <p class="mt-1 text-amber-900/90">
+      Newsletter send and test emails are blocked until SMTP is set.
+      {% if mail.needs_password %}
+        <span class="font-medium">MAIL_PASSWORD is still empty</span> — add your Zoho app password to
+        <code class="rounded bg-amber-100/80 px-1">.env</code>, then restart.
+      {% else %}
+        Add Zoho (or other) <code class="rounded bg-amber-100/80 px-1">MAIL_*</code> values to
+        <code class="rounded bg-amber-100/80 px-1">.env</code>, then restart the app.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+{% endif %}

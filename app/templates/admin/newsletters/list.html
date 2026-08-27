@@ -4,6 +4,8 @@
 
 {% block admin_content %}
 <section class="space-y-6">
+  {% include "admin/partials/mail_status.html" %}
+
   <div class="flex flex-wrap items-end justify-between gap-4">
     <p class="text-sm text-stone-500">Compose campaigns, preview HTML, schedule, and send to active subscribers.</p>
     <a href="{{ url_for('admin.newsletter_create') }}" class="inline-flex rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">

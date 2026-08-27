@@ -26,7 +26,7 @@ from app.services.articles import get_article
 from app.services.publications import get_or_create_default_publication
 from app.services import subscribers as subscriber_service
 from app.utils.activity import log_activity
-from app.utils.email import send_html_email
+from app.utils.email import MailNotConfiguredError, mail_is_configured, send_html_email
 from app.utils.html_sanitize import sanitize_article_html
 from app.utils.tokens import generate_click_token, generate_open_token
 
@@ -36,6 +36,14 @@ _HREF_RE = re.compile(r"""href=(['"])(https?://.*?)\1""", re.IGNORECASE)
 class NewsletterError(ValueError):
     """Domain error for newsletter operations."""
 
+
+def _require_mail() -> None:
+    if not mail_is_configured():
+        raise NewsletterError(
+            "Outbound mail is not configured. Set MAIL_SERVER, MAIL_USERNAME, "
+            "MAIL_PASSWORD, and MAIL_DEFAULT_SENDER in .env (Zoho: smtp.zoho.com), "
+            "then restart the app."
+        )
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -316,6 +324,7 @@ def save_newsletter_from_form(form, *, newsletter: Newsletter | None = None) -> 
 
 
 def schedule_newsletter(newsletter: Newsletter, when: datetime) -> Newsletter:
+    _require_mail()
     if newsletter.status not in (NewsletterStatus.DRAFT, NewsletterStatus.SCHEDULED):
         raise NewsletterError("Only draft or scheduled campaigns can be scheduled.")
     if when.tzinfo is None:
@@ -397,6 +406,7 @@ def _render_for_subscriber(
 
 
 def send_test_email(newsletter: Newsletter, to_email: str) -> None:
+    _require_mail()
     to_email = to_email.strip().lower()
     if not to_email or "@" not in to_email:
         raise NewsletterError("Enter a valid test email address.")
@@ -409,11 +419,17 @@ def send_test_email(newsletter: Newsletter, to_email: str) -> None:
         custom_html=newsletter.html_content,
         unsubscribe_url=url_for("main.unsubscribe", _external=True),
     )
-    send_html_email(
-        to_email=to_email,
-        subject=f"[TEST] {newsletter.subject}",
-        html_body=html,
-    )
+    try:
+        send_html_email(
+            to_email=to_email,
+            subject=f"[TEST] {newsletter.subject}",
+            html_body=html,
+            require_smtp=True,
+        )
+    except MailNotConfiguredError as exc:
+        raise NewsletterError(str(exc)) from exc
+    except OSError as exc:
+        raise NewsletterError(f"Could not send test email: {exc}") from exc
     log_activity("newsletter.test_sent", f"Test for “{newsletter.subject}” → {to_email}")
     db.session.commit()
 
@@ -421,6 +437,8 @@ def send_test_email(newsletter: Newsletter, to_email: str) -> None:
 def send_newsletter_now(newsletter: Newsletter) -> dict[str, int]:
     if newsletter.status in (NewsletterStatus.SENDING, NewsletterStatus.SENT):
         raise NewsletterError("This campaign has already been sent.")
+
+    _require_mail()
 
     newsletter.status = NewsletterStatus.SENDING
     db.session.commit()
@@ -452,10 +470,17 @@ def send_newsletter_now(newsletter: Newsletter) -> dict[str, int]:
                 to_email=subscriber.email,
                 subject=newsletter.subject,
                 html_body=html,
+                require_smtp=True,
             )
             delivery.status = DeliveryStatus.SENT
             delivery.sent_at = _now()
             stats["sent"] += 1
+        except MailNotConfiguredError as exc:
+            # Should be caught by _require_mail; roll campaign back to draft.
+            newsletter.status = NewsletterStatus.DRAFT
+            newsletter.sent_at = None
+            db.session.commit()
+            raise NewsletterError(str(exc)) from exc
         except Exception as exc:  # noqa: BLE001 — isolate per-recipient failures
             delivery.status = DeliveryStatus.FAILED
             stats["failed"] += 1

@@ -142,13 +142,18 @@ def _register_context_processors(app: Flask) -> None:
     @app.context_processor
     def inject_site_settings():
         from app.services.site_settings import get_site_settings
+        from app.utils.email import mail_status
 
         try:
             site = get_site_settings()
         except Exception:  # noqa: BLE001 — avoid breaking pages before migrations
             app.logger.debug("Site settings unavailable", exc_info=True)
             site = None
-        return {"site": site}
+        try:
+            mail = mail_status()
+        except Exception:  # noqa: BLE001
+            mail = {"configured": False, "server": "", "sender": "", "username": "", "port": "587"}
+        return {"site": site, "mail": mail}
 
 
 def _register_shell_context(app: Flask) -> None:

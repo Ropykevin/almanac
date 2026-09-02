@@ -310,8 +310,8 @@ def save_newsletter_from_form(form, *, newsletter: Newsletter | None = None) -> 
         db.session.add(newsletter)
         action = "newsletter.created"
     else:
-        if newsletter.status not in (NewsletterStatus.DRAFT, NewsletterStatus.SCHEDULED):
-            raise NewsletterError("Only draft or scheduled campaigns can be edited.")
+        if newsletter.status == NewsletterStatus.SENDING:
+            raise NewsletterError("Wait until sending finishes before editing this campaign.")
         action = "newsletter.updated"
 
     newsletter.subject = subject
@@ -349,10 +349,9 @@ def cancel_schedule(newsletter: Newsletter) -> Newsletter:
 
 
 def delete_newsletter(newsletter: Newsletter) -> None:
-    if newsletter.status in (NewsletterStatus.SENDING, NewsletterStatus.SENT):
-        raise NewsletterError("Sent campaigns cannot be deleted.")
     subject = newsletter.subject
-    log_activity("newsletter.deleted", f"Deleted newsletter “{subject}”")
+    status = newsletter.status.value
+    log_activity("newsletter.deleted", f"Deleted newsletter “{subject}” ({status})")
     db.session.delete(newsletter)
     db.session.commit()
 
@@ -434,7 +433,7 @@ def send_test_email(newsletter: Newsletter, to_email: str) -> None:
     db.session.commit()
 
 
-def send_newsletter_now(newsletter: Newsletter) -> dict[str, int]:
+def send_newsletter_now(newsletter: Newsletter) -> dict[str, int | list[str]]:
     if newsletter.status in (NewsletterStatus.SENDING, NewsletterStatus.SENT):
         raise NewsletterError("This campaign has already been sent.")
 
@@ -444,7 +443,12 @@ def send_newsletter_now(newsletter: Newsletter) -> dict[str, int]:
     db.session.commit()
 
     subscribers = _active_subscribers(newsletter.publication_id)
-    stats = {"sent": 0, "failed": 0, "skipped": 0}
+    stats: dict[str, int | list[str]] = {
+        "sent": 0,
+        "failed": 0,
+        "skipped": 0,
+        "errors": [],
+    }
     if not subscribers:
         newsletter.status = NewsletterStatus.SENT
         newsletter.sent_at = _now()
@@ -462,7 +466,7 @@ def send_newsletter_now(newsletter: Newsletter) -> dict[str, int]:
             DeliveryStatus.OPENED,
             DeliveryStatus.CLICKED,
         ):
-            stats["skipped"] += 1
+            stats["skipped"] = int(stats["skipped"]) + 1
             continue
         try:
             html = _render_for_subscriber(newsletter, subscriber, delivery)
@@ -474,16 +478,20 @@ def send_newsletter_now(newsletter: Newsletter) -> dict[str, int]:
             )
             delivery.status = DeliveryStatus.SENT
             delivery.sent_at = _now()
-            stats["sent"] += 1
+            delivery.error_message = None
+            stats["sent"] = int(stats["sent"]) + 1
         except MailNotConfiguredError as exc:
-            # Should be caught by _require_mail; roll campaign back to draft.
             newsletter.status = NewsletterStatus.DRAFT
             newsletter.sent_at = None
             db.session.commit()
             raise NewsletterError(str(exc)) from exc
         except Exception as exc:  # noqa: BLE001 — isolate per-recipient failures
             delivery.status = DeliveryStatus.FAILED
-            stats["failed"] += 1
+            delivery.error_message = str(exc)[:2000]
+            stats["failed"] = int(stats["failed"]) + 1
+            errors = stats["errors"]
+            assert isinstance(errors, list)
+            errors.append(f"{subscriber.email}: {exc}")
             from flask import current_app
 
             current_app.logger.exception(
@@ -498,6 +506,72 @@ def send_newsletter_now(newsletter: Newsletter) -> dict[str, int]:
     log_activity(
         "newsletter.sent",
         f"Sent “{newsletter.subject}” sent={stats['sent']} failed={stats['failed']}",
+    )
+    db.session.commit()
+    return stats
+
+
+def retry_failed_deliveries(newsletter: Newsletter) -> dict[str, int | list[str]]:
+    """Re-attempt FAILED deliveries for an already-sent campaign."""
+    if newsletter.status != NewsletterStatus.SENT:
+        raise NewsletterError("Only sent campaigns can retry failed deliveries.")
+    _require_mail()
+
+    failed = list(
+        db.session.scalars(
+            select(NewsletterDelivery)
+            .options(joinedload(NewsletterDelivery.subscriber))
+            .where(
+                NewsletterDelivery.newsletter_id == newsletter.id,
+                NewsletterDelivery.status == DeliveryStatus.FAILED,
+            )
+        ).unique().all()
+    )
+    stats: dict[str, int | list[str]] = {
+        "sent": 0,
+        "failed": 0,
+        "skipped": 0,
+        "errors": [],
+    }
+    if not failed:
+        raise NewsletterError("No failed deliveries to retry.")
+
+    for delivery in failed:
+        subscriber = delivery.subscriber
+        if subscriber is None or subscriber.status != SubscriberStatus.ACTIVE:
+            stats["skipped"] = int(stats["skipped"]) + 1
+            continue
+        try:
+            html = _render_for_subscriber(newsletter, subscriber, delivery)
+            send_html_email(
+                to_email=subscriber.email,
+                subject=newsletter.subject,
+                html_body=html,
+                require_smtp=True,
+            )
+            delivery.status = DeliveryStatus.SENT
+            delivery.sent_at = _now()
+            delivery.error_message = None
+            stats["sent"] = int(stats["sent"]) + 1
+        except Exception as exc:  # noqa: BLE001
+            delivery.status = DeliveryStatus.FAILED
+            delivery.error_message = str(exc)[:2000]
+            stats["failed"] = int(stats["failed"]) + 1
+            errors = stats["errors"]
+            assert isinstance(errors, list)
+            errors.append(f"{subscriber.email}: {exc}")
+            from flask import current_app
+
+            current_app.logger.exception(
+                "Newsletter retry failed for %s: %s",
+                subscriber.email,
+                exc,
+            )
+        db.session.commit()
+
+    log_activity(
+        "newsletter.retry",
+        f"Retry “{newsletter.subject}” sent={stats['sent']} failed={stats['failed']}",
     )
     db.session.commit()
     return stats

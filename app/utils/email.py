@@ -18,10 +18,18 @@ class MailNotConfiguredError(RuntimeError):
     """Raised when a real SMTP send is required but MAIL_SERVER is unset."""
 
 
+_PLACEHOLDER_MAIL_HOSTS = {
+    "smtp.yourprovider.com",
+    "smtp.example.com",
+    "localhost",
+    "127.0.0.1",
+}
+
+
 def mail_is_configured() -> bool:
     """True when MAIL_SERVER is set so messages leave the app over SMTP."""
-    server = (current_app.config.get("MAIL_SERVER") or "").strip()
-    if not server:
+    server = (current_app.config.get("MAIL_SERVER") or "").strip().lower()
+    if not server or server in _PLACEHOLDER_MAIL_HOSTS:
         return False
     username = (current_app.config.get("MAIL_USERNAME") or "").strip()
     password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
@@ -39,6 +47,7 @@ def mail_status() -> dict[str, str | bool]:
     username = (current_app.config.get("MAIL_USERNAME") or "").strip()
     password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
     configured = mail_is_configured()
+    placeholder = server.lower() in _PLACEHOLDER_MAIL_HOSTS
     return {
         "configured": configured,
         "server": server,
@@ -46,6 +55,7 @@ def mail_status() -> dict[str, str | bool]:
         "username": username,
         "port": str(current_app.config.get("MAIL_PORT") or 587),
         "needs_password": bool(username and not password),
+        "placeholder_server": placeholder,
     }
 
 
@@ -92,12 +102,29 @@ def _send_email(
     username = current_app.config.get("MAIL_USERNAME")
     password = current_app.config.get("MAIL_PASSWORD")
 
-    with smtplib.SMTP(mail_server, port, timeout=20) as smtp:
-        if use_tls:
-            smtp.starttls()
-        if username and password:
-            smtp.login(username, password)
-        smtp.send_message(message)
+    try:
+        with smtplib.SMTP(mail_server, port, timeout=20) as smtp:
+            if use_tls:
+                smtp.starttls()
+            if username and password:
+                smtp.login(username, password)
+            smtp.send_message(message)
+    except smtplib.SMTPAuthenticationError as exc:
+        raise RuntimeError(
+            "SMTP login failed. Check MAIL_USERNAME / MAIL_PASSWORD "
+            "(use a Zoho app password, not your normal mailbox password)."
+        ) from exc
+    except smtplib.SMTPRecipientsRefused as exc:
+        raise RuntimeError(f"Recipient refused by mail server: {to_email}") from exc
+    except smtplib.SMTPSenderRefused as exc:
+        raise RuntimeError(
+            f"Sender refused by mail server: {message['From']}. "
+            "From address must match the Zoho mailbox."
+        ) from exc
+    except smtplib.SMTPException as exc:
+        raise RuntimeError(f"SMTP error: {exc}") from exc
+    except OSError as exc:
+        raise RuntimeError(f"Could not connect to {mail_server}:{port} — {exc}") from exc
 
     logger.info("Email sent to %s (%s)", to_email, subject)
 

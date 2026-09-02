@@ -94,7 +94,8 @@ def newsletter_detail(newsletter_id: str):
     _bind_article_choices(form)
     schedule_form = NewsletterScheduleForm()
     test_form = NewsletterTestForm()
-    editable = newsletter.status in (
+    editable = newsletter.status != NewsletterStatus.SENDING
+    can_send = newsletter.status in (
         NewsletterStatus.DRAFT,
         NewsletterStatus.SCHEDULED,
     )
@@ -128,6 +129,7 @@ def newsletter_detail(newsletter_id: str):
         stats=stats,
         deliveries=deliveries,
         editable=editable,
+        can_send=can_send,
         breadcrumbs=[
             {"label": "Newsletters", "url": url_for("admin.newsletter_list")},
             {"label": newsletter.subject, "url": None},
@@ -246,9 +248,38 @@ def newsletter_send(newsletter_id: str):
     except newsletter_service.NewsletterError as exc:
         flash(str(exc), "error")
     else:
+        errors = stats.get("errors") or []
+        if stats["failed"]:
+            detail = f" First error: {errors[0]}" if errors else ""
+            flash(
+                f"Campaign finished: {stats['sent']} delivered, {stats['failed']} failed.{detail}",
+                "error" if not stats["sent"] else "warning",
+            )
+        else:
+            flash(
+                f"Campaign sent: {stats['sent']} delivered, {stats['failed']} failed.",
+                "success",
+            )
+    return redirect(url_for("admin.newsletter_detail", newsletter_id=newsletter.id))
+
+
+@admin_bp.route("/newsletters/<newsletter_id>/retry-failed", methods=["POST"])
+@login_required
+@staff_required
+def newsletter_retry_failed(newsletter_id: str):
+    newsletter = newsletter_service.get_newsletter(_parse_uuid(newsletter_id))
+    if newsletter is None:
+        abort(404)
+    try:
+        stats = newsletter_service.retry_failed_deliveries(newsletter)
+    except newsletter_service.NewsletterError as exc:
+        flash(str(exc), "error")
+    else:
+        errors = stats.get("errors") or []
+        detail = f" First error: {errors[0]}" if errors else ""
         flash(
-            f"Campaign sent: {stats['sent']} delivered, {stats['failed']} failed.",
-            "success",
+            f"Retry finished: {stats['sent']} delivered, {stats['failed']} failed.{detail}",
+            "success" if stats["sent"] and not stats["failed"] else "warning",
         )
     return redirect(url_for("admin.newsletter_detail", newsletter_id=newsletter.id))
 

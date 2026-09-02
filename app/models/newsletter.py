@@ -132,6 +132,7 @@ class NewsletterDelivery(db.Model):
         default=DeliveryStatus.PENDING,
         server_default=DeliveryStatus.PENDING.value,
     )
+    error_message: Mapped[Optional[str]] = mapped_column(Text)
     sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     opened_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     clicked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

@@ -84,7 +84,13 @@
                   {% endif %}
                 </td>
                 <td class="px-5 py-4 text-right">
-                  <a href="{{ url_for('admin.newsletter_detail', newsletter_id=item.id) }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">Open</a>
+                  <div class="inline-flex items-center gap-3">
+                    <a href="{{ url_for('admin.newsletter_detail', newsletter_id=item.id) }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">Edit</a>
+                    <form method="post" action="{{ url_for('admin.newsletter_delete', newsletter_id=item.id) }}" onsubmit="return confirm('Delete “{{ item.subject|e }}”?');" class="inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="text-sm font-medium text-rose-700 hover:text-rose-800">Delete</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             {% endfor %}

@@ -13,7 +13,12 @@
     <p class="font-semibold">Outbound mail is not configured</p>
     <p class="mt-1 text-amber-900/90">
       Newsletter send and test emails are blocked until SMTP is set.
-      {% if mail.needs_password %}
+      {% if mail.placeholder_server %}
+        <span class="font-medium">MAIL_SERVER is still a placeholder</span>
+        (<code class="rounded bg-amber-100/80 px-1">{{ mail.server }}</code>).
+        Set it to <code class="rounded bg-amber-100/80 px-1">smtp.zoho.com</code> on the server
+        <code class="rounded bg-amber-100/80 px-1">.env</code>, then restart.
+      {% elif mail.needs_password %}
         <span class="font-medium">MAIL_PASSWORD is still empty</span> — add your Zoho app password to
         <code class="rounded bg-amber-100/80 px-1">.env</code>, then restart.
       {% else %}

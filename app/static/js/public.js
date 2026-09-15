@@ -21,7 +21,9 @@
     }
   }
 
-  // Scroll reveal for editorial sections
+  // Scroll reveal for editorial sections.
+  // Use a near-zero threshold so tall blocks (article bodies) still become
+  // visible when any part enters the viewport.
   const reveals = document.querySelectorAll(".reveal-on-scroll");
   if (reveals.length && "IntersectionObserver" in window) {
     const observer = new IntersectionObserver(
@@ -33,7 +35,7 @@
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+      { threshold: 0.01, rootMargin: "0px 0px -4% 0px" }
     );
     reveals.forEach((el, index) => {
       el.style.transitionDelay = `${Math.min(index * 60, 240)}ms`;

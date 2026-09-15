@@ -24,13 +24,9 @@
 
   <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
     {% if project_body_html %}
-      <div class="prose-article reveal-on-scroll">
+      <div class="prose-article">
         {{ project_body_html|safe }}
       </div>
-    {% else %}
-      <p class="reveal-on-scroll text-stone-600">
-        More detail for this project is coming soon. Check back as the research strand develops.
-      </p>
     {% endif %}
 
     {% if project_articles %}

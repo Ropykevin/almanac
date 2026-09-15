@@ -2,7 +2,7 @@
 
 {% block content %}
 <section class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-  <header class="reveal-on-scroll max-w-2xl">
+  <header class="max-w-2xl">
     <p class="page-kicker">Blog</p>
     <h1 class="public-section-title mt-3 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
       The collection
@@ -12,7 +12,7 @@
     </p>
   </header>
 
-  <form method="get" action="{{ url_for('main.archive') }}" class="reveal-on-scroll mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row">
+  <form method="get" action="{{ url_for('main.archive') }}" class="mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row">
     {% if current_category %}
       <input type="hidden" name="category" value="{{ current_category }}">
     {% endif %}
@@ -32,7 +32,7 @@
   </form>
 
   {% if categories %}
-    <div class="reveal-on-scroll mt-8 flex flex-wrap gap-2">
+    <div class="mt-8 flex flex-wrap gap-2">
       <a
         href="{{ url_for('main.archive', q=current_query or None) }}"
         class="filter-chip {% if not current_category %}is-active{% endif %}"
@@ -50,7 +50,7 @@
     </div>
   {% endif %}
 
-  <p class="reveal-on-scroll mt-6 text-sm text-stone-500">
+  <p class="mt-6 text-sm text-stone-500">
     {{ total }} article{% if total != 1 %}s{% endif %}
     {% if current_query %} matching “{{ current_query }}”{% endif %}
   </p>
@@ -58,14 +58,14 @@
   {% if articles %}
     <div class="mt-8 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
       {% for article in articles %}
-        <div class="reveal-on-scroll">
+        <div>
           {% include "partials/article_teaser.html" %}
         </div>
       {% endfor %}
     </div>
 
     {% if total_pages > 1 %}
-      <nav class="reveal-on-scroll mt-12 flex items-center justify-between border-t border-stone-300/80 pt-6 text-sm" aria-label="Pagination">
+      <nav class="mt-12 flex items-center justify-between border-t border-stone-300/80 pt-6 text-sm" aria-label="Pagination">
         {% if page > 1 %}
           <a class="font-medium underline underline-offset-4" style="color: var(--brand-primary)" href="{{ url_for('main.archive', page=page-1, category=current_category, tag=current_tag, q=current_query or None) }}">Previous</a>
         {% else %}
@@ -80,7 +80,7 @@
       </nav>
     {% endif %}
   {% else %}
-    <div class="reveal-on-scroll mt-14 max-w-lg">
+    <div class="mt-14 max-w-lg">
       {% if current_query %}
         <p class="font-display text-2xl text-ink-900">No articles match “{{ current_query }}”.</p>
         <p class="mt-2 text-stone-600">Try another keyword, or <a href="{{ url_for('main.archive', category=current_category) }}" class="underline" style="color: var(--brand-primary)">clear the search</a>.</p>

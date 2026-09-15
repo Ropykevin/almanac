@@ -4,19 +4,19 @@
 <article>
   <header class="pt-10 sm:pt-14">
     <div class="mx-auto max-w-3xl px-4 sm:px-6">
-      <p class="page-kicker reveal-on-scroll">
+      <p class="page-kicker">
         <a href="{{ url_for('main.projects') }}" class="hover:underline">Projects</a>
       </p>
-      <h1 class="reveal-on-scroll mt-4 font-display text-[clamp(2.1rem,5vw,3.4rem)] font-semibold leading-[1.12] tracking-tight text-ink-900">
+      <h1 class="mt-4 font-display text-[clamp(2.1rem,5vw,3.4rem)] font-semibold leading-[1.12] tracking-tight text-ink-900">
         {{ project.title }}
       </h1>
-      <div class="reveal-on-scroll mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-stone-300/80 py-4 text-sm">
+      <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-stone-300/80 py-4 text-sm">
         <p class="home-tracking__status {% if project.status.value == 'LIVE' %}is-live{% else %}is-soon{% endif %}">
           <span class="home-tracking__status-mark" aria-hidden="true"></span>
           {{ project.status_label }}
         </p>
       </div>
-      <p class="reveal-on-scroll mt-8 text-xl leading-relaxed text-stone-600 sm:text-2xl">
+      <p class="mt-8 text-xl leading-relaxed text-stone-600 sm:text-2xl">
         {{ project.description }}
       </p>
     </div>
@@ -30,7 +30,7 @@
     {% endif %}
 
     {% if project_articles %}
-    <section class="reveal-on-scroll mt-14 border-t border-stone-300/80 pt-10">
+    <section class="mt-14 border-t border-stone-300/80 pt-10">
       <h2 class="public-section-title text-2xl font-semibold tracking-tight text-ink-900 sm:text-3xl">
         Related essays
       </h2>
@@ -60,7 +60,7 @@
     {% endif %}
 
     {% if project_documents %}
-    <section class="reveal-on-scroll mt-14 border-t border-stone-300/80 pt-10">
+    <section class="mt-14 border-t border-stone-300/80 pt-10">
       <h2 class="public-section-title text-2xl font-semibold tracking-tight text-ink-900 sm:text-3xl">
         Documents
       </h2>
@@ -90,7 +90,7 @@
     </section>
     {% endif %}
 
-    <p class="reveal-on-scroll mt-12 border-t border-stone-300/80 pt-8">
+    <p class="mt-12 border-t border-stone-300/80 pt-8">
       <a href="{{ url_for('main.projects') }}" class="text-sm font-semibold underline underline-offset-4" style="color: var(--brand-primary)">
         ← All projects
       </a>

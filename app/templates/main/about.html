@@ -6,12 +6,12 @@
     class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--brand-primary)_14%,transparent),transparent_50%)]">
   </div>
   <div class="relative mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
-    <p class="page-kicker reveal-on-scroll">About</p>
+    <p class="page-kicker">About</p>
     <h1
-      class="public-section-title reveal-on-scroll mt-3 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
+      class="public-section-title mt-3 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
       {{ site.name if site else config.APP_NAME }}
     </h1>
-    <p class="reveal-on-scroll mt-6 font-display text-2xl leading-snug text-stone-700 sm:text-3xl">
+    <p class="mt-6 font-display text-2xl leading-snug text-stone-700 sm:text-3xl">
       {% if site and site.tagline %}
       {{ site.tagline }}
       {% else %}
@@ -19,7 +19,7 @@
       {% endif %}
     </p>
 
-    <div class="prose-article reveal-on-scroll mt-10">
+    <div class="prose-article mt-10">
       {% if site and site.description %}
       <p>{{ site.description }}</p>
       {% endif %}
@@ -45,7 +45,7 @@
       </p>
     </div>
 
-    <div class="reveal-on-scroll mt-12 flex flex-wrap gap-3">
+    <div class="mt-12 flex flex-wrap gap-3">
       <a href="{{ url_for('main.archive') }}" class="btn-primary">Read the blog</a>
       <a href="{{ url_for('main.subscribe') }}" class="btn-outline">Newsletter</a>
     </div>

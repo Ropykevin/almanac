@@ -21,43 +21,6 @@
     }
   }
 
-  // Scroll reveal: opt-in only after JS is ready so content never stays blank.
-  const reveals = document.querySelectorAll(".reveal-on-scroll");
-  const showAllReveals = () => {
-    reveals.forEach((el) => el.classList.add("is-visible"));
-  };
-
-  if (!reveals.length) {
-    /* nothing to animate */
-  } else if (!("IntersectionObserver" in window)) {
-    showAllReveals();
-  } else {
-    document.documentElement.classList.add("js-reveal");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0, rootMargin: "0px 0px -2% 0px" }
-    );
-    reveals.forEach((el, index) => {
-      el.style.transitionDelay = `${Math.min(index * 40, 160)}ms`;
-      const rect = el.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight && rect.bottom > 0;
-      if (inView) {
-        el.classList.add("is-visible");
-      } else {
-        observer.observe(el);
-      }
-    });
-    // Failsafe: never leave page sections invisible.
-    window.setTimeout(showAllReveals, 1200);
-  }
-
   // Reading progress on article pages
   const progress = document.querySelector("[data-reading-progress]");
   const articleBody = document.querySelector("[data-article-body]");

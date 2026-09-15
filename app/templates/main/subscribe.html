@@ -7,7 +7,7 @@
   </div>
   <div
     class="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-start lg:gap-16 lg:py-24">
-    <div class="reveal-on-scroll">
+    <div>
       <p class="page-kicker">Newsletter</p>
       <h1 class="public-section-title mt-3 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
         Why subscribe?
@@ -22,7 +22,7 @@
     </div>
 
     <div
-      class="reveal-on-scroll border border-stone-300/80 bg-white/80 p-6 backdrop-blur-sm sm:p-8 lg:sticky lg:top-24">
+      class="border border-stone-300/80 bg-white/80 p-6 backdrop-blur-sm sm:p-8 lg:sticky lg:top-24">
       <form method="post" novalidate class="space-y-5">
         {{ form.hidden_tag() }}
         <div class="space-y-1.5">
@@ -51,7 +51,7 @@
 
 <section class="border-t border-stone-300/70">
   <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-    <div class="reveal-on-scroll max-w-md">
+    <div class="max-w-md">
       <h2 class="public-section-title text-2xl font-semibold tracking-tight text-ink-900 sm:text-3xl">
         Stay up-to-date
       </h2>
@@ -64,7 +64,7 @@
 
 <section class="border-t border-stone-300/70">
   <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-    <div class="reveal-on-scroll max-w-2xl">
+    <div class="max-w-2xl">
       <h2 class="public-section-title text-2xl font-semibold tracking-tight text-ink-900 sm:text-3xl">
         Previous newsletters
       </h2>
@@ -74,7 +74,7 @@
     </div>
 
     {% if substack_posts %}
-      <ul class="reveal-on-scroll mt-10 divide-y divide-stone-200 border-t border-stone-300/80">
+      <ul class="mt-10 divide-y divide-stone-200 border-t border-stone-300/80">
         {% for post in substack_posts %}
           <li>
             <a
@@ -94,7 +94,7 @@
         {% endfor %}
       </ul>
       {% if substack_url %}
-        <p class="reveal-on-scroll mt-8">
+        <p class="mt-8">
           <a
             href="{{ substack_url }}"
             target="_blank"
@@ -107,7 +107,7 @@
         </p>
       {% endif %}
     {% elif substack_url %}
-      <div class="reveal-on-scroll mt-10 border-t border-stone-300/80 pt-8">
+      <div class="mt-10 border-t border-stone-300/80 pt-8">
         <a
           href="{{ substack_url }}"
           target="_blank"
@@ -121,7 +121,7 @@
         </a>
       </div>
     {% elif previous_newsletters %}
-      <ul class="reveal-on-scroll mt-10 divide-y divide-stone-200 border-t border-stone-300/80">
+      <ul class="mt-10 divide-y divide-stone-200 border-t border-stone-300/80">
         {% for item in previous_newsletters %}
           {% set sent = item.sent_at or item.created_at %}
           {% if item.article and item.article.status.value == 'PUBLISHED' %}
@@ -144,7 +144,7 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="reveal-on-scroll mt-8 text-stone-600">
+      <p class="mt-8 text-stone-600">
         Add your Substack URL in Admin → Settings to show previous issues here.
       </p>
     {% endif %}

@@ -204,25 +204,6 @@ body.public-body {
   }
 }
 
-/* Visible by default — only hide when JS opts into motion (avoids blank pages). */
-.reveal-on-scroll {
-  opacity: 1;
-  transform: none;
-}
-
-html.js-reveal .reveal-on-scroll:not(.is-visible) {
-  opacity: 0;
-  transform: translateY(16px);
-  transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-html.js-reveal .reveal-on-scroll.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .hero-kenburns {
   animation: kenburns 18s ease-out both;
 }
@@ -783,9 +764,7 @@ a.home-tracking__row--link:focus-visible {
   .hero-reveal-delay,
   .hero-reveal-delay-2,
   .hero-kenburns,
-  .story-teaser__image,
-  .reveal-on-scroll,
-  html.js-reveal .reveal-on-scroll:not(.is-visible) {
+  .story-teaser__image {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;

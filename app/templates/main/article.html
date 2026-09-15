@@ -13,18 +13,18 @@
   <header class="pt-10 sm:pt-14">
     <div class="mx-auto max-w-3xl px-4 sm:px-6">
       {% if article.categories %}
-        <p class="page-kicker reveal-on-scroll" style="color: var(--brand-primary)">
+        <p class="page-kicker" style="color: var(--brand-primary)">
           {{ article.categories|map(attribute='name')|join(' · ') }}
         </p>
       {% endif %}
-      <h1 class="reveal-on-scroll mt-4 font-display text-[clamp(2.1rem,5vw,3.4rem)] font-semibold leading-[1.12] tracking-tight text-ink-900" itemprop="name">
+      <h1 class="mt-4 font-display text-[clamp(2.1rem,5vw,3.4rem)] font-semibold leading-[1.12] tracking-tight text-ink-900" itemprop="name">
         {{ article.title }}
       </h1>
       {% if article.subtitle %}
-        <p class="reveal-on-scroll mt-5 text-xl leading-relaxed text-stone-600 sm:text-2xl">{{ article.subtitle }}</p>
+        <p class="mt-5 text-xl leading-relaxed text-stone-600 sm:text-2xl">{{ article.subtitle }}</p>
       {% endif %}
 
-      <div class="reveal-on-scroll mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-stone-300/80 py-4 text-sm text-stone-500">
+      <div class="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-stone-300/80 py-4 text-sm text-stone-500">
         {% if article.author %}
           <span itemprop="author" itemscope itemtype="https://schema.org/Person">
             <span itemprop="name" class="font-medium text-ink-900">{{ article.author.full_name }}</span>
@@ -39,7 +39,7 @@
       </div>
 
       {% if article.tags %}
-        <div class="reveal-on-scroll mt-5 flex flex-wrap gap-2">
+        <div class="mt-5 flex flex-wrap gap-2">
           {% for tag in article.tags %}
             <a href="{{ url_for('main.archive', tag=tag.slug) }}" class="filter-chip text-xs">
               #{{ tag.name }}
@@ -49,7 +49,7 @@
       {% endif %}
 
       {% if article.project and article.project.is_published %}
-        <p class="reveal-on-scroll mt-5 text-sm text-stone-600">
+        <p class="mt-5 text-sm text-stone-600">
           Part of
           <a
             href="{{ url_for('main.project_detail', slug=article.project.slug) }}"
@@ -61,7 +61,7 @@
     </div>
 
     {% if article.featured_image_media %}
-      <div class="article-hero-media reveal-on-scroll mx-auto mt-10 max-w-5xl px-0 sm:mt-12 sm:px-6">
+      <div class="article-hero-media mx-auto mt-10 max-w-5xl px-0 sm:mt-12 sm:px-6">
         <img
           src="{{ url_for('static', filename=article.featured_image_media.path) }}"
           alt="{{ article.featured_image_media.alt_text or article.title }}"
@@ -76,7 +76,7 @@
 
   <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16" data-article-body>
     {% if article.excerpt %}
-      <p class="reveal-on-scroll border-l-2 pl-5 font-display text-xl leading-relaxed text-stone-700 sm:text-2xl" style="border-color: var(--brand-primary)">
+      <p class="border-l-2 pl-5 font-display text-xl leading-relaxed text-stone-700 sm:text-2xl" style="border-color: var(--brand-primary)">
         {{ article.excerpt }}
       </p>
     {% endif %}
@@ -93,7 +93,7 @@
 
     <div
       id="engage"
-      class="reveal-on-scroll mt-12 flex flex-wrap items-center gap-3 border-y border-stone-300/80 py-5"
+      class="mt-12 flex flex-wrap items-center gap-3 border-y border-stone-300/80 py-5"
       data-article-engage
       data-like-url="{{ url_for('main.article_like', slug=article.slug) }}"
       data-csrf-token="{{ csrf_token() }}"
@@ -176,7 +176,7 @@
     </div>
 
     {% if article.author %}
-      <aside class="reveal-on-scroll mt-14">
+      <aside class="mt-14">
         <p class="page-kicker">Author</p>
         <div class="mt-5 flex gap-4">
           <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-display text-lg font-semibold text-white" style="background: var(--brand-primary)">
@@ -198,7 +198,7 @@
     {% endif %}
 
     {% if article.allow_comments %}
-      <section id="comments" class="reveal-on-scroll mt-16 border-t border-stone-300/80 pt-12">
+      <section id="comments" class="mt-16 border-t border-stone-300/80 pt-12">
         <h2 class="public-section-title text-2xl font-semibold text-ink-900 sm:text-3xl">
           Comments
         </h2>
@@ -253,10 +253,10 @@
   {% if related %}
     <section class="border-t border-stone-300/80 bg-[var(--paper-deep)]">
       <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-        <h2 class="public-section-title reveal-on-scroll text-3xl font-semibold text-ink-900">Related reading</h2>
+        <h2 class="public-section-title text-3xl font-semibold text-ink-900">Related reading</h2>
         <div class="mt-8 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {% for article in related %}
-            <div class="reveal-on-scroll">
+            <div>
               {% include "partials/article_teaser.html" %}
             </div>
           {% endfor %}

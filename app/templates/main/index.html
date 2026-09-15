@@ -35,7 +35,7 @@
 <section class="home-ways">
   <div class="home-rule home-rule--top" aria-hidden="true"><span></span></div>
   <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-    <div class="reveal-on-scroll max-w-2xl">
+    <div class="max-w-2xl">
       <p class="home-ways__dot" aria-hidden="true"></p>
       <h2 class="public-section-title mt-4 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
         Three ways in.
@@ -45,7 +45,7 @@
       </p>
     </div>
 
-    <div class="reveal-on-scroll home-ways__grid mt-12">
+    <div class="home-ways__grid mt-12">
       <a href="{{ url_for('main.subscribe') }}" class="home-ways__col group">
         <p class="home-ways__label">01 / Newsletter</p>
         <h3 class="home-ways__title">Monthly dispatch</h3>
@@ -78,17 +78,17 @@
 
 <section class="home-subscribe" id="subscribe">
   <div class="mx-auto max-w-xl px-4 py-16 sm:px-6 sm:py-24">
-    <p class="page-kicker reveal-on-scroll">Stay up-to-date</p>
+    <p class="page-kicker">Stay up-to-date</p>
     <h2
-      class="public-section-title reveal-on-scroll mt-4 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
+      class="public-section-title mt-4 text-4xl font-semibold tracking-tight text-ink-900 sm:text-5xl">
       Get the Newsletter, <em class="home-em-soft">free.</em>
     </h2>
-    <p class="reveal-on-scroll mt-4 text-lg leading-relaxed text-stone-600">
+    <p class="mt-4 text-lg leading-relaxed text-stone-600">
       A calm, considered read on AI governance in Africa — no hype, no doom, just the clearest picture we can build.
       Unsubscribe anytime.
     </p>
 
-    <form method="post" action="{{ url_for('main.subscribe') }}" class="reveal-on-scroll home-subscribe__box mt-8"
+    <form method="post" action="{{ url_for('main.subscribe') }}" class="home-subscribe__box mt-8"
       novalidate>
       {{ subscribe_form.hidden_tag() }}
       <label class="sr-only" for="home-email">Email</label>
@@ -101,7 +101,7 @@
       </p>
     </form>
 
-    <p class="reveal-on-scroll mt-8 text-sm text-stone-600">
+    <p class="mt-8 text-sm text-stone-600">
       Prefer to browse first?
       <a href="{{ url_for('main.archive') }}" class="font-medium underline underline-offset-4"
         style="color: var(--home-accent)">read the blog →</a>

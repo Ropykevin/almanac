@@ -21,11 +21,18 @@
     }
   }
 
-  // Scroll reveal for editorial sections.
-  // Use a near-zero threshold so tall blocks (article bodies) still become
-  // visible when any part enters the viewport.
+  // Scroll reveal: opt-in only after JS is ready so content never stays blank.
   const reveals = document.querySelectorAll(".reveal-on-scroll");
-  if (reveals.length && "IntersectionObserver" in window) {
+  const showAllReveals = () => {
+    reveals.forEach((el) => el.classList.add("is-visible"));
+  };
+
+  if (!reveals.length) {
+    /* nothing to animate */
+  } else if (!("IntersectionObserver" in window)) {
+    showAllReveals();
+  } else {
+    document.documentElement.classList.add("js-reveal");
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -35,14 +42,20 @@
           }
         });
       },
-      { threshold: 0.01, rootMargin: "0px 0px -4% 0px" }
+      { threshold: 0, rootMargin: "0px 0px -2% 0px" }
     );
     reveals.forEach((el, index) => {
-      el.style.transitionDelay = `${Math.min(index * 60, 240)}ms`;
-      observer.observe(el);
+      el.style.transitionDelay = `${Math.min(index * 40, 160)}ms`;
+      const rect = el.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+      if (inView) {
+        el.classList.add("is-visible");
+      } else {
+        observer.observe(el);
+      }
     });
-  } else {
-    reveals.forEach((el) => el.classList.add("is-visible"));
+    // Failsafe: never leave page sections invisible.
+    window.setTimeout(showAllReveals, 1200);
   }
 
   // Reading progress on article pages

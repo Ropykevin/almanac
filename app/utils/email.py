@@ -6,6 +6,7 @@ import logging
 import re
 import smtplib
 from email.message import EmailMessage
+from email.utils import formataddr, parseaddr
 
 from flask import current_app, url_for
 
@@ -40,10 +41,48 @@ def mail_is_configured() -> bool:
     return True
 
 
+def _sender_display_name() -> str:
+    """Publication / app name used as the From display name."""
+    try:
+        from app.services.site_settings import get_site_settings
+
+        name = (get_site_settings().name or "").strip()
+        if name:
+            return name
+    except Exception:
+        # Outside a request/DB context (tests, early boot) fall back to APP_NAME.
+        pass
+    return (current_app.config.get("APP_NAME") or "").strip()
+
+
+def format_from_header(raw_sender: str | None = None) -> str:
+    """Build ``Display Name <email@domain>`` for the SMTP From header.
+
+    ``MAIL_DEFAULT_SENDER`` may be a bare address or already include a name.
+    The mailbox address is kept; the visible name comes from site settings
+    (then APP_NAME), so inboxes show the publication name instead of “hello”.
+    """
+    configured = (
+        raw_sender
+        if raw_sender is not None
+        else (current_app.config.get("MAIL_DEFAULT_SENDER") or "")
+    ).strip()
+    _env_name, address = parseaddr(configured)
+    if not address:
+        fallback = (current_app.config.get("MAIL_USERNAME") or "noreply@localhost").strip()
+        _env_name, address = parseaddr(fallback)
+        address = address or fallback
+
+    display = _sender_display_name() or (_env_name or "").strip()
+    if display:
+        return formataddr((display, address))
+    return address
+
+
 def mail_status() -> dict[str, str | bool]:
     """Admin-facing snapshot of outbound mail config (no secrets)."""
     server = (current_app.config.get("MAIL_SERVER") or "").strip()
-    sender = (current_app.config.get("MAIL_DEFAULT_SENDER") or "").strip()
+    sender = format_from_header()
     username = (current_app.config.get("MAIL_USERNAME") or "").strip()
     password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
     configured = mail_is_configured()
@@ -91,7 +130,7 @@ def _send_email(
 
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = current_app.config.get("MAIL_DEFAULT_SENDER", "noreply@localhost")
+    message["From"] = format_from_header()
     message["To"] = to_email
     message.set_content(body)
     if html_body:

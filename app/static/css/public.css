@@ -204,6 +204,15 @@ body.public-body {
   }
 }
 
+/* Legacy scroll-reveal kill-switch: never hide content (old HTML may still ship the class). */
+.reveal-on-scroll,
+.reveal-on-scroll.is-visible,
+.prose-article {
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+}
+
 .hero-kenburns {
   animation: kenburns 18s ease-out both;
 }

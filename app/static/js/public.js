@@ -21,6 +21,14 @@
     }
   }
 
+  // Legacy: if any reveal-on-scroll nodes remain, force them visible immediately.
+  document.querySelectorAll(".reveal-on-scroll").forEach((el) => {
+    el.classList.add("is-visible");
+    el.style.opacity = "1";
+    el.style.transform = "none";
+    el.style.visibility = "visible";
+  });
+
   // Reading progress on article pages
   const progress = document.querySelector("[data-reading-progress]");
   const articleBody = document.querySelector("[data-article-body]");

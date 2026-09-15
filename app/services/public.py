@@ -3,21 +3,49 @@
 from __future__ import annotations
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, load_only
 
 from app.extensions import db
 from app.models import Article, ArticleStatus, Category, Tag
 
 
-def _published_options():
-    return (
+def _published_options(*, include_body: bool = True):
+    options = [
         joinedload(Article.author),
         joinedload(Article.featured_image_media),
         joinedload(Article.categories),
         joinedload(Article.tags),
         joinedload(Article.publication),
         joinedload(Article.project),
-    )
+    ]
+    if not include_body:
+        # Blog/list cards never need the full HTML body — defer it to cut payload.
+        options.insert(
+            0,
+            load_only(
+                Article.id,
+                Article.publication_id,
+                Article.author_id,
+                Article.project_id,
+                Article.title,
+                Article.slug,
+                Article.subtitle,
+                Article.excerpt,
+                Article.featured_image,
+                Article.reading_time,
+                Article.featured,
+                Article.allow_comments,
+                Article.status,
+                Article.seo_title,
+                Article.seo_description,
+                Article.canonical_url,
+                Article.published_at,
+                Article.scheduled_at,
+                Article.created_at,
+                Article.updated_at,
+            ),
+        )
+    return tuple(options)
 
 
 def _keyword_filters(query: str | None) -> list:
@@ -49,10 +77,11 @@ def list_published_articles(
     category_slug: str | None = None,
     tag_slug: str | None = None,
     query: str | None = None,
+    include_body: bool = False,
 ) -> list[Article]:
     stmt = (
         select(Article)
-        .options(*_published_options())
+        .options(*_published_options(include_body=include_body))
         .where(Article.status == ArticleStatus.PUBLISHED)
         .order_by(func.coalesce(Article.published_at, Article.created_at).desc())
     )
@@ -92,7 +121,7 @@ def count_published_articles(
 def get_published_article(slug: str) -> Article | None:
     stmt = (
         select(Article)
-        .options(*_published_options())
+        .options(*_published_options(include_body=True))
         .where(
             Article.slug == slug,
             Article.status == ArticleStatus.PUBLISHED,
@@ -104,7 +133,7 @@ def get_published_article(slug: str) -> Article | None:
 def get_featured_article() -> Article | None:
     stmt = (
         select(Article)
-        .options(*_published_options())
+        .options(*_published_options(include_body=False))
         .where(
             Article.status == ArticleStatus.PUBLISHED,
             Article.featured.is_(True),
@@ -115,7 +144,7 @@ def get_featured_article() -> Article | None:
     featured = db.session.scalars(stmt).unique().first()
     if featured is not None:
         return featured
-    latest = list_published_articles(limit=1)
+    latest = list_published_articles(limit=1, include_body=False)
     return latest[0] if latest else None
 
 
@@ -126,7 +155,7 @@ def related_articles(article: Article, *, limit: int = 3) -> list[Article]:
     if not category_ids and not tag_ids:
         stmt = (
             select(Article)
-            .options(*_published_options())
+            .options(*_published_options(include_body=False))
             .where(
                 Article.status == ArticleStatus.PUBLISHED,
                 Article.id != article.id,
@@ -144,7 +173,7 @@ def related_articles(article: Article, *, limit: int = 3) -> list[Article]:
 
     stmt = (
         select(Article)
-        .options(*_published_options())
+        .options(*_published_options(include_body=False))
         .outerjoin(Article.categories)
         .outerjoin(Article.tags)
         .where(
@@ -185,7 +214,7 @@ def _search_articles_postgres(query: str, *, limit: int) -> list[Article]:
     )
     stmt = (
         select(Article, rank.label("rank"))
-        .options(*_published_options())
+        .options(*_published_options(include_body=False))
         .where(
             Article.status == ArticleStatus.PUBLISHED,
             or_(ts_vector.op("@@")(ts_query), ilike_match),
@@ -220,7 +249,7 @@ def _search_articles_ilike(query: str, *, limit: int) -> list[Article]:
 
     stmt = (
         select(Article)
-        .options(*_published_options())
+        .options(*_published_options(include_body=False))
         .where(Article.status == ArticleStatus.PUBLISHED, *filters)
         .order_by(func.coalesce(Article.published_at, Article.created_at).desc())
         .limit(limit)
@@ -242,6 +271,16 @@ def search_articles(query: str, *, limit: int = 30) -> list[Article]:
 def list_sitemap_articles(*, limit: int = 5000) -> list[Article]:
     stmt = (
         select(Article)
+        .options(
+            load_only(
+                Article.id,
+                Article.slug,
+                Article.updated_at,
+                Article.published_at,
+                Article.created_at,
+                Article.status,
+            )
+        )
         .where(Article.status == ArticleStatus.PUBLISHED)
         .order_by(func.coalesce(Article.published_at, Article.created_at).desc())
         .limit(limit)
@@ -250,7 +289,7 @@ def list_sitemap_articles(*, limit: int = 5000) -> list[Article]:
 
 
 def list_feed_articles(*, limit: int = 30) -> list[Article]:
-    return list_published_articles(limit=limit)
+    return list_published_articles(limit=limit, include_body=True)
 
 
 def list_public_categories() -> list[Category]:

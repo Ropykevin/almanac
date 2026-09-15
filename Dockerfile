@@ -1,4 +1,15 @@
 # Almanac Africa AI — production image
+
+FROM node:22-alpine AS css
+WORKDIR /build
+COPY package.json package-lock.json* ./
+RUN npm ci
+COPY tailwind.config.js ./
+COPY app/templates ./app/templates
+COPY app/static/js ./app/static/js
+COPY app/static/css/input.css ./app/static/css/input.css
+RUN npm run build:css
+
 FROM python:3.13-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -18,6 +29,7 @@ RUN pip install --upgrade pip \
     && pip install -r requirements.txt
 
 COPY . .
+COPY --from=css /build/app/static/css/main.css ./app/static/css/main.css
 
 RUN useradd --create-home --shell /bin/bash appuser \
     && mkdir -p /app/logs /app/instance /app/app/static/uploads \

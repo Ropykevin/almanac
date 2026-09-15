@@ -141,18 +141,33 @@ def _register_context_processors(app: Flask) -> None:
 
     @app.context_processor
     def inject_site_settings():
+        from flask import request
+
         from app.services.site_settings import get_site_settings
-        from app.utils.email import mail_status
 
         try:
             site = get_site_settings()
         except Exception:  # noqa: BLE001 — avoid breaking pages before migrations
             app.logger.debug("Site settings unavailable", exc_info=True)
             site = None
-        try:
-            mail = mail_status()
-        except Exception:  # noqa: BLE001
-            mail = {"configured": False, "server": "", "sender": "", "username": "", "port": "587"}
+
+        # Mail status is only needed in admin newsletter UI — skip on public pages.
+        path = (request.path if request else "") or ""
+        if path.startswith("/admin"):
+            from app.utils.email import mail_status
+
+            try:
+                mail = mail_status()
+            except Exception:  # noqa: BLE001
+                mail = {
+                    "configured": False,
+                    "server": "",
+                    "sender": "",
+                    "username": "",
+                    "port": "587",
+                }
+        else:
+            mail = None
         return {"site": site, "mail": mail}
 
 

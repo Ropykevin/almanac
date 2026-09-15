@@ -159,6 +159,11 @@ def _social_links(kv: dict[str, str]) -> list[dict[str, str]]:
 
 
 def get_site_settings() -> SiteSettings:
+    from flask import g, has_request_context
+
+    if has_request_context() and getattr(g, "_site_settings", None) is not None:
+        return g._site_settings
+
     publication = get_or_create_default_publication()
     # Ensure logo/banner are available
     publication = db.session.scalar(
@@ -176,7 +181,7 @@ def get_site_settings() -> SiteSettings:
         or kv.get("theme_primary_color")
         or SETTING_DEFAULTS["theme_primary_color"]
     )
-    return SiteSettings(
+    settings = SiteSettings(
         publication_id=str(publication.id),
         name=publication.name,
         description=(publication.description or "").strip(),
@@ -203,6 +208,9 @@ def get_site_settings() -> SiteSettings:
         banner_url=_media_url(publication.banner),
         social_links=_social_links(kv),
     )
+    if has_request_context():
+        g._site_settings = settings
+    return settings
 
 
 def save_site_settings_from_form(form, *, uploader) -> SiteSettings:

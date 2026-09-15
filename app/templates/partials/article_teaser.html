@@ -7,6 +7,7 @@
         alt="{{ article.featured_image_media.alt_text or article.title }}"
         class="story-teaser__image aspect-[16/10] w-full object-cover"
         loading="lazy"
+        decoding="async"
       >
     {% else %}
       <div class="flex aspect-[16/10] w-full items-end bg-gradient-to-br from-ink-900 via-[var(--brand-primary)] to-stone-700 p-5">

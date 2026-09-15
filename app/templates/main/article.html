@@ -67,6 +67,8 @@
           alt="{{ article.featured_image_media.alt_text or article.title }}"
           class="aspect-[21/9] w-full object-cover sm:rounded-sm"
           itemprop="image"
+          fetchpriority="high"
+          decoding="async"
         >
       </div>
     {% endif %}

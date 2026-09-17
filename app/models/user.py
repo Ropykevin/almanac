@@ -111,5 +111,10 @@ class User(UserMixin, db.Model):
         }
         return labels.get(self.role, self.role.value)
 
+    @property
+    def public_role_label(self) -> str:
+        """Reader-facing title — never exposes internal admin roles."""
+        return "Editor"
+
     def __repr__(self) -> str:
         return f"<User {self.email} ({self.role})>"

@@ -29,6 +29,7 @@
           <span itemprop="author" itemscope itemtype="https://schema.org/Person">
             <span itemprop="name" class="font-medium text-ink-900">{{ article.author.full_name }}</span>
           </span>
+          <span>{{ article.author.public_role_label }}</span>
         {% endif %}
         {% if article.reading_time %}
           <span>{{ article.reading_time }} min read</span>
@@ -184,7 +185,7 @@
           </div>
           <div>
             <h2 class="font-display text-xl font-semibold text-ink-900">{{ article.author.full_name }}</h2>
-            <p class="mt-1 text-sm text-stone-500">{{ article.author.role_label }}</p>
+            <p class="mt-1 text-sm text-stone-500">{{ article.author.public_role_label }}</p>
             {% if article.author.bio %}
               <p class="mt-3 text-sm leading-relaxed text-stone-600">{{ article.author.bio }}</p>
             {% else %}

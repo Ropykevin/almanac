@@ -329,6 +329,11 @@ def subscribe():
                 "info",
                 "You’re already subscribed. Thanks for staying with us.",
             ),
+            "mail_failed": (
+                "error",
+                "We saved your signup, but could not send the confirmation email right now. "
+                "Please try again in a little while — if this keeps happening, email hello@almanac.africa.",
+            ),
         }
         category, text = messages.get(
             outcome,

@@ -83,6 +83,36 @@ def test_subscribe(client, app):
         assert sub.status.value == "PENDING"
 
 
+def test_subscribe_mail_failure_does_not_500(client, app, monkeypatch):
+    from app.utils import email as email_utils
+
+    def boom(*_args, **_kwargs):
+        raise email_utils.MailSendError(
+            "The mail provider temporarily blocked outbound mail "
+            "(unusual sending activity)."
+        )
+
+    monkeypatch.setattr(
+        "app.services.subscribers.send_subscription_verification_email",
+        boom,
+    )
+    response = client.post(
+        "/subscribe",
+        data={
+            "full_name": "Reader Two",
+            "email": "reader2@example.com",
+            "submit": "Subscribe",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"could not send" in response.data.lower()
+    with app.app_context():
+        sub = Subscriber.query.filter_by(email="reader2@example.com").first()
+        assert sub is not None
+        assert sub.status.value == "PENDING"
+
+
 def test_unpublished_not_public(client, app):
     with app.app_context():
         user = User(

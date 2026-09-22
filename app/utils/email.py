@@ -19,6 +19,10 @@ class MailNotConfiguredError(RuntimeError):
     """Raised when a real SMTP send is required but MAIL_SERVER is unset."""
 
 
+class MailSendError(RuntimeError):
+    """Raised when SMTP is configured but the provider rejects or fails the send."""
+
+
 _PLACEHOLDER_MAIL_HOSTS = {
     "smtp.yourprovider.com",
     "smtp.example.com",
@@ -149,23 +153,46 @@ def _send_email(
                 smtp.login(username, password)
             smtp.send_message(message)
     except smtplib.SMTPAuthenticationError as exc:
-        raise RuntimeError(
+        raise MailSendError(
             "SMTP login failed. Check MAIL_USERNAME / MAIL_PASSWORD "
             "(use a Zoho app password, not your normal mailbox password)."
         ) from exc
     except smtplib.SMTPRecipientsRefused as exc:
-        raise RuntimeError(f"Recipient refused by mail server: {to_email}") from exc
+        raise MailSendError(f"Recipient refused by mail server: {to_email}") from exc
     except smtplib.SMTPSenderRefused as exc:
-        raise RuntimeError(
+        raise MailSendError(
             f"Sender refused by mail server: {message['From']}. "
             "From address must match the Zoho mailbox."
         ) from exc
+    except smtplib.SMTPDataError as exc:
+        detail = _smtp_user_message(exc)
+        raise MailSendError(detail) from exc
     except smtplib.SMTPException as exc:
-        raise RuntimeError(f"SMTP error: {exc}") from exc
+        raise MailSendError(f"SMTP error: {exc}") from exc
     except OSError as exc:
-        raise RuntimeError(f"Could not connect to {mail_server}:{port} — {exc}") from exc
+        raise MailSendError(
+            f"Could not connect to {mail_server}:{port} — {exc}"
+        ) from exc
 
     logger.info("Email sent to %s (%s)", to_email, subject)
+
+
+def _smtp_user_message(exc: smtplib.SMTPException) -> str:
+    """Turn provider SMTP codes into actionable operator-facing text."""
+    raw = " ".join(str(part) for part in (getattr(exc, "smtp_code", ""), getattr(exc, "smtp_error", exc)))
+    lower = raw.lower()
+    if "5.4.6" in raw or "unusual sending activity" in lower:
+        return (
+            "The mail provider temporarily blocked outbound mail "
+            "(unusual sending activity). Unblock the mailbox in Zoho "
+            "(mail.zoho.com/UnblockMe), then try again."
+        )
+    if "550" in raw and "spam" in lower:
+        return (
+            "The mail provider rejected this message as suspected spam. "
+            "Review Zoho sending limits and try again later."
+        )
+    return f"SMTP error: {exc}"
 
 
 def send_password_reset_email(to_email: str, token: str) -> None:

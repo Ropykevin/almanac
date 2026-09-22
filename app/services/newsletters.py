@@ -26,7 +26,7 @@ from app.services.articles import get_article
 from app.services.publications import get_or_create_default_publication
 from app.services import subscribers as subscriber_service
 from app.utils.activity import log_activity
-from app.utils.email import MailNotConfiguredError, mail_is_configured, send_html_email
+from app.utils.email import MailNotConfiguredError, MailSendError, mail_is_configured, send_html_email
 from app.utils.html_sanitize import sanitize_article_html
 from app.utils.tokens import generate_click_token, generate_open_token
 
@@ -425,7 +425,7 @@ def send_test_email(newsletter: Newsletter, to_email: str) -> None:
             html_body=html,
             require_smtp=True,
         )
-    except MailNotConfiguredError as exc:
+    except (MailNotConfiguredError, MailSendError) as exc:
         raise NewsletterError(str(exc)) from exc
     except OSError as exc:
         raise NewsletterError(f"Could not send test email: {exc}") from exc

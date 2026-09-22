@@ -15,6 +15,8 @@ from app.models import Subscriber, SubscriberStatus
 from app.services.publications import get_or_create_default_publication
 from app.utils.activity import log_activity
 from app.utils.email import (
+    MailNotConfiguredError,
+    MailSendError,
     send_subscription_verification_email,
     send_unsubscribe_confirmation_email,
 )
@@ -106,7 +108,7 @@ def subscribe_email(
     Start or resume subscription (PENDING until verified).
 
     Returns (subscriber, outcome):
-    created | pending_resent | already_active | unsubscribed_resent
+    created | pending_resent | already_active | unsubscribed_resent | mail_failed
     """
     publication = get_or_create_default_publication()
     email = _normalize_email(email)
@@ -127,7 +129,8 @@ def subscribe_email(
         outcome = "unsubscribed_resent" if was_unsubscribed else "pending_resent"
         log_activity("subscriber.verification_sent", f"Verification sent to {email}")
         db.session.commit()
-        send_subscription_verification_email(email, token)
+        if not _try_send_verification(email, token):
+            return existing, "mail_failed"
         return existing, outcome
 
     subscriber = Subscriber(
@@ -141,8 +144,22 @@ def subscribe_email(
     db.session.add(subscriber)
     log_activity("subscriber.created", f"Pending subscriber {email}")
     db.session.commit()
-    send_subscription_verification_email(email, token)
+    if not _try_send_verification(email, token):
+        return subscriber, "mail_failed"
     return subscriber, "created"
+
+
+def _try_send_verification(email: str, token: str) -> bool:
+    """Send confirmation mail; return False on provider/config failure (no raise)."""
+    try:
+        send_subscription_verification_email(email, token)
+        return True
+    except (MailSendError, MailNotConfiguredError) as exc:
+        log_activity(
+            "subscriber.verification_failed",
+            f"Could not email {email}: {exc}",
+        )
+        return False
 
 
 def verify_subscription(token: str) -> Subscriber | None:
@@ -191,7 +208,13 @@ def _mark_unsubscribed(subscriber: Subscriber) -> Subscriber:
     subscriber.verification_token = None
     log_activity("subscriber.unsubscribed", f"Unsubscribed {subscriber.email}")
     db.session.commit()
-    send_unsubscribe_confirmation_email(subscriber.email)
+    try:
+        send_unsubscribe_confirmation_email(subscriber.email)
+    except (MailSendError, MailNotConfiguredError) as exc:
+        log_activity(
+            "subscriber.unsubscribe_email_failed",
+            f"Unsubscribed {subscriber.email} but confirmation email failed: {exc}",
+        )
     return subscriber
 
 
@@ -216,7 +239,11 @@ def resend_verification(subscriber: Subscriber) -> None:
         f"Resent verification to {subscriber.email}",
     )
     db.session.commit()
-    send_subscription_verification_email(subscriber.email, token)
+    if not _try_send_verification(subscriber.email, token):
+        raise SubscriberError(
+            "Subscriber saved, but the confirmation email could not be sent. "
+            "Check outbound mail (Zoho may have blocked sending)."
+        )
 
 
 def set_status(subscriber: Subscriber, status: SubscriberStatus) -> Subscriber:

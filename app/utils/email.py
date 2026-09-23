@@ -78,6 +78,13 @@ def format_from_header(raw_sender: str | None = None) -> str:
         address = address or fallback
 
     display = _sender_display_name() or (_env_name or "").strip()
+    # Normalize fancy punctuation that can break some SMTP providers.
+    display = (
+        display.replace("\u2019", "'")
+        .replace("\u2018", "'")
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+    )
     if display:
         return formataddr((display, address))
     return address
@@ -132,9 +139,11 @@ def _send_email(
         )
         return
 
+    from_header = format_from_header()
+    _, from_addr = parseaddr(from_header)
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = format_from_header()
+    message["From"] = from_header
     message["To"] = to_email
     message.set_content(body)
     if html_body:
@@ -151,7 +160,9 @@ def _send_email(
                 smtp.starttls()
             if username and password:
                 smtp.login(username, password)
-            smtp.send_message(message)
+            # Use bare address for the envelope — Brevo validates this against
+            # verified senders more reliably than a display-name From header.
+            smtp.send_message(message, from_addr=from_addr or None)
     except smtplib.SMTPAuthenticationError as exc:
         raise MailSendError(
             "SMTP login failed. Check MAIL_USERNAME / MAIL_PASSWORD "

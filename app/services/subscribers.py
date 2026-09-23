@@ -129,7 +129,8 @@ def subscribe_email(
         outcome = "unsubscribed_resent" if was_unsubscribed else "pending_resent"
         log_activity("subscriber.verification_sent", f"Verification sent to {email}")
         db.session.commit()
-        if not _try_send_verification(email, token):
+        mail_error = _try_send_verification(email, token)
+        if mail_error:
             return existing, "mail_failed"
         return existing, outcome
 
@@ -144,22 +145,30 @@ def subscribe_email(
     db.session.add(subscriber)
     log_activity("subscriber.created", f"Pending subscriber {email}")
     db.session.commit()
-    if not _try_send_verification(email, token):
+    mail_error = _try_send_verification(email, token)
+    if mail_error:
         return subscriber, "mail_failed"
     return subscriber, "created"
 
 
-def _try_send_verification(email: str, token: str) -> bool:
-    """Send confirmation mail; return False on provider/config failure (no raise)."""
+def _try_send_verification(email: str, token: str) -> str | None:
+    """Send confirmation mail. Returns None on success, or an error message."""
     try:
         send_subscription_verification_email(email, token)
-        return True
+        return None
     except (MailSendError, MailNotConfiguredError) as exc:
+        from flask import current_app
+
+        current_app.logger.error(
+            "Subscription verification email failed for %s: %s",
+            email,
+            exc,
+        )
         log_activity(
             "subscriber.verification_failed",
             f"Could not email {email}: {exc}",
         )
-        return False
+        return str(exc)
 
 
 def verify_subscription(token: str) -> Subscriber | None:
@@ -239,10 +248,10 @@ def resend_verification(subscriber: Subscriber) -> None:
         f"Resent verification to {subscriber.email}",
     )
     db.session.commit()
-    if not _try_send_verification(subscriber.email, token):
+    mail_error = _try_send_verification(subscriber.email, token)
+    if mail_error:
         raise SubscriberError(
-            "Subscriber saved, but the confirmation email could not be sent. "
-            "Check outbound mail (Brevo SMTP credentials / domain verification)."
+            f"Confirmation email could not be sent: {mail_error}"
         )
 
 

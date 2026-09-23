@@ -226,6 +226,15 @@ body.public-body {
   }
 }
 
+.hp-field {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .reading-progress {
   position: fixed;
   top: 0;

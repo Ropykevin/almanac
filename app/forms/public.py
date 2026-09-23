@@ -16,6 +16,16 @@ class SubscribeForm(FlaskForm):
         validators=[DataRequired(), Email(), Length(max=150)],
         render_kw={"placeholder": "Type your email…", "autocomplete": "email"},
     )
+    # Honeypot — must stay empty. Name chosen to look like a real field to bots.
+    company = StringField(
+        "Company",
+        validators=[Optional(), Length(max=200)],
+        render_kw={
+            "autocomplete": "off",
+            "tabindex": "-1",
+            "aria-hidden": "true",
+        },
+    )
     submit = SubmitField("Subscribe")
 
 

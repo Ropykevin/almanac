@@ -304,10 +304,27 @@ def search():
 
 
 @main_bp.route("/subscribe", methods=["GET", "POST"])
-@limiter.limit("10 per minute")
+@limiter.limit("8 per minute")
+@limiter.limit("30 per hour")
 def subscribe():
     form = SubscribeForm()
     if form.validate_on_submit():
+        from app.utils.subscribe_guard import evaluate_subscribe_request
+
+        guard = evaluate_subscribe_request(form, request)
+        if not guard.ok:
+            if guard.silent:
+                flash(
+                    "Check your email to confirm your subscription.",
+                    "success",
+                )
+            else:
+                flash(
+                    "Please confirm you are human and try again.",
+                    "error",
+                )
+            return redirect(url_for("main.subscribe"))
+
         _, outcome = subscriber_service.subscribe_email(
             email=form.email.data,
             full_name=form.full_name.data,

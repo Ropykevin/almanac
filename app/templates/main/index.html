@@ -91,11 +91,18 @@
     <form method="post" action="{{ url_for('main.subscribe') }}" class="home-subscribe__box mt-8"
       novalidate>
       {{ subscribe_form.hidden_tag() }}
+      <div class="hp-field" aria-hidden="true">
+        <label for="home-company">Company</label>
+        {{ subscribe_form.company(id="home-company", tabindex="-1") }}
+      </div>
       <label class="sr-only" for="home-email">Email</label>
       <div class="home-subscribe__row">
         {{ subscribe_form.email(id="home-email", class="home-subscribe__input", placeholder="Type your email…") }}
         {{ subscribe_form.submit(class="home-subscribe__btn") }}
       </div>
+      {% if turnstile_site_key %}
+      <div class="cf-turnstile mt-4" data-sitekey="{{ turnstile_site_key }}" data-theme="light"></div>
+      {% endif %}
       <p class="mt-3 text-xs leading-relaxed text-stone-500">
         We’ll send a confirmation email before you’re added to the list.
       </p>
@@ -108,4 +115,10 @@
     </p>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+{% if turnstile_site_key %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
 {% endblock %}

@@ -168,7 +168,11 @@ def _register_context_processors(app: Flask) -> None:
                 }
         else:
             mail = None
-        return {"site": site, "mail": mail}
+        return {
+            "site": site,
+            "mail": mail,
+            "turnstile_site_key": (app.config.get("TURNSTILE_SITE_KEY") or "").strip() or None,
+        }
 
 
 def _register_shell_context(app: Flask) -> None:

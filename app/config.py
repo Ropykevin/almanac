@@ -84,6 +84,10 @@ class Config:
     MAIL_PASSWORD = _env("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = _env("MAIL_DEFAULT_SENDER", "noreply@almanac.local")
 
+    # Optional Cloudflare Turnstile (subscribe anti-bot). Both keys required to enable.
+    TURNSTILE_SITE_KEY = (_env("TURNSTILE_SITE_KEY") or "").strip()
+    TURNSTILE_SECRET_KEY = (_env("TURNSTILE_SECRET_KEY") or "").strip()
+
     # Paths
     STATIC_FOLDER = "static"
     TEMPLATE_FOLDER = "templates"

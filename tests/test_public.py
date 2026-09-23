@@ -73,6 +73,7 @@ def test_subscribe(client, app):
             "email": "reader@example.com",
             "submit": "Subscribe",
         },
+        headers={"User-Agent": "Mozilla/5.0 (compatible; AlmanacTest/1.0)"},
         follow_redirects=True,
     )
     assert response.status_code == 200

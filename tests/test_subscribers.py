@@ -140,3 +140,42 @@ def test_admin_rejects_duplicate_create(client, editor, app):
     assert b"already exists" in again.data
     with app.app_context():
         assert Subscriber.query.filter_by(email="once@example.com").count() == 1
+
+
+def test_admin_resend_all_pending(client, editor, app, monkeypatch):
+    sent: list[str] = []
+
+    def fake_send(email: str, token: str) -> None:
+        sent.append(email)
+
+    monkeypatch.setattr(
+        "app.services.subscribers.send_subscription_verification_email",
+        fake_send,
+    )
+    monkeypatch.setattr("app.services.subscribers.time.sleep", lambda *_a, **_k: None)
+
+    _login(client)
+    with app.app_context():
+        subscriber_service.create_subscriber_admin(
+            email="p1@example.com",
+            full_name="P1",
+            status=SubscriberStatus.PENDING,
+        )
+        subscriber_service.create_subscriber_admin(
+            email="p2@example.com",
+            full_name="P2",
+            status=SubscriberStatus.PENDING,
+        )
+        subscriber_service.create_subscriber_admin(
+            email="active@example.com",
+            full_name="Active",
+            status=SubscriberStatus.ACTIVE,
+        )
+
+    response = client.post(
+        "/admin/subscribers/resend-pending",
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Resent confirmation" in response.data
+    assert sorted(sent) == ["p1@example.com", "p2@example.com"]

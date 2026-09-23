@@ -121,6 +121,35 @@ def subscriber_edit(subscriber_id: str):
     )
 
 
+@admin_bp.route("/subscribers/resend-pending", methods=["POST"])
+@login_required
+@staff_required
+def subscriber_resend_pending():
+    stats = subscriber_service.resend_all_pending()
+    sent = int(stats["sent"])
+    failed = int(stats["failed"])
+    remaining = int(stats["remaining"])
+    attempted = int(stats["attempted"])
+    if attempted == 0:
+        flash("No pending subscribers to confirm.", "info")
+    else:
+        flash(
+            f"Resent confirmation to {sent} pending subscriber"
+            f"{'s' if sent != 1 else ''}"
+            + (f"; {failed} failed" if failed else "")
+            + (
+                f". {remaining} still pending — run again for the rest."
+                if remaining
+                else "."
+            ),
+            "success" if sent and not failed else ("error" if not sent else "warning"),
+        )
+        errors = stats.get("errors") or []
+        if isinstance(errors, list) and errors:
+            flash("Examples: " + " | ".join(errors[:3]), "error")
+    return redirect(url_for("admin.subscriber_list", status="PENDING"))
+
+
 @admin_bp.route("/subscribers/<subscriber_id>/resend", methods=["POST"])
 @login_required
 @staff_required

@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import secrets
+import time
 import uuid
 from datetime import datetime, timezone
 
@@ -253,6 +254,45 @@ def resend_verification(subscriber: Subscriber) -> None:
         raise SubscriberError(
             f"Confirmation email could not be sent: {mail_error}"
         )
+
+
+def resend_all_pending(
+    *,
+    delay_seconds: float = 0.4,
+    limit: int = 150,
+) -> dict[str, int | list[str]]:
+    """Resend confirmation emails to PENDING subscribers (batched)."""
+    pending = list_subscribers(status=SubscriberStatus.PENDING.value)
+    total = len(pending)
+    batch = pending[: max(limit, 0)]
+    stats: dict[str, int | list[str]] = {
+        "total_pending": total,
+        "attempted": len(batch),
+        "sent": 0,
+        "failed": 0,
+        "remaining": max(total - len(batch), 0),
+        "errors": [],
+    }
+    for index, subscriber in enumerate(batch):
+        try:
+            resend_verification(subscriber)
+            stats["sent"] = int(stats["sent"]) + 1
+        except SubscriberError as exc:
+            stats["failed"] = int(stats["failed"]) + 1
+            errors = stats["errors"]
+            assert isinstance(errors, list)
+            if len(errors) < 10:
+                errors.append(f"{subscriber.email}: {exc}")
+        if delay_seconds > 0 and index < len(batch) - 1:
+            time.sleep(delay_seconds)
+    log_activity(
+        "subscriber.verification_bulk_resent",
+        (
+            f"Bulk resend pending: sent={stats['sent']} failed={stats['failed']} "
+            f"attempted={stats['attempted']} remaining={stats['remaining']}"
+        ),
+    )
+    return stats
 
 
 def set_status(subscriber: Subscriber, status: SubscriberStatus) -> Subscriber:

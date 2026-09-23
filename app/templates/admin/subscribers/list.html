@@ -7,6 +7,21 @@
   <div class="flex flex-wrap items-end justify-between gap-4">
     <p class="text-sm text-stone-500">Manage newsletter subscriptions, verification, and exports.</p>
     <div class="flex flex-wrap gap-2">
+      {% if counts.PENDING %}
+      <form
+        method="post"
+        action="{{ url_for('admin.subscriber_resend_pending') }}"
+        onsubmit="return confirm('Resend confirmation emails to all pending subscribers? This may take a minute.');"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button
+          type="submit"
+          class="inline-flex rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 hover:border-amber-300"
+        >
+          Resend all pending ({{ counts.PENDING }})
+        </button>
+      </form>
+      {% endif %}
       <a
         href="{{ url_for('admin.subscriber_export', status=current_status, q=q) }}"
         class="inline-flex rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 hover:border-stone-300"

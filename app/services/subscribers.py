@@ -242,7 +242,7 @@ def resend_verification(subscriber: Subscriber) -> None:
     if not _try_send_verification(subscriber.email, token):
         raise SubscriberError(
             "Subscriber saved, but the confirmation email could not be sent. "
-            "Check outbound mail (Zoho may have blocked sending)."
+            "Check outbound mail (Brevo SMTP credentials / domain verification)."
         )
 
 

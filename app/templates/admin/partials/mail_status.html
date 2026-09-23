@@ -16,14 +16,15 @@
       {% if mail.placeholder_server %}
         <span class="font-medium">MAIL_SERVER is still a placeholder</span>
         (<code class="rounded bg-amber-100/80 px-1">{{ mail.server }}</code>).
-        Set it to <code class="rounded bg-amber-100/80 px-1">smtp.zoho.com</code> on the server
+        Set it to <code class="rounded bg-amber-100/80 px-1">smtp-relay.brevo.com</code> on the server
         <code class="rounded bg-amber-100/80 px-1">.env</code>, then restart.
       {% elif mail.needs_password %}
-        <span class="font-medium">MAIL_PASSWORD is still empty</span> — add your Zoho app password to
+        <span class="font-medium">MAIL_PASSWORD is still empty</span> — add your Brevo SMTP key to
         <code class="rounded bg-amber-100/80 px-1">.env</code>, then restart.
       {% else %}
-        Add Zoho (or other) <code class="rounded bg-amber-100/80 px-1">MAIL_*</code> values to
-        <code class="rounded bg-amber-100/80 px-1">.env</code>, then restart the app.
+        Add Brevo <code class="rounded bg-amber-100/80 px-1">MAIL_*</code> values to
+        <code class="rounded bg-amber-100/80 px-1">.env</code>
+        (<code class="rounded bg-amber-100/80 px-1">smtp-relay.brevo.com</code>), then restart the app.
       {% endif %}
     </p>
   </div>

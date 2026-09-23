@@ -41,8 +41,8 @@ def _require_mail() -> None:
     if not mail_is_configured():
         raise NewsletterError(
             "Outbound mail is not configured. Set MAIL_SERVER, MAIL_USERNAME, "
-            "MAIL_PASSWORD, and MAIL_DEFAULT_SENDER in .env (Zoho: smtp.zoho.com), "
-            "then restart the app."
+            "MAIL_PASSWORD, and MAIL_DEFAULT_SENDER in .env "
+            "(Brevo: smtp-relay.brevo.com), then restart the app."
         )
 
 def _now() -> datetime:

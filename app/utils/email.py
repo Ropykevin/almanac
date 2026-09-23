@@ -39,7 +39,7 @@ def mail_is_configured() -> bool:
     username = (current_app.config.get("MAIL_USERNAME") or "").strip()
     password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
     # Login credentials are optional for open relays; if a username is set,
-    # require a password so half-configured Zoho setups don't look "active".
+    # require a password so half-configured SMTP setups don't look "active".
     if username and not password:
         return False
     return True
@@ -155,14 +155,14 @@ def _send_email(
     except smtplib.SMTPAuthenticationError as exc:
         raise MailSendError(
             "SMTP login failed. Check MAIL_USERNAME / MAIL_PASSWORD "
-            "(use a Zoho app password, not your normal mailbox password)."
+            "(for Brevo, use the SMTP login + SMTP key from Settings → SMTP & API)."
         ) from exc
     except smtplib.SMTPRecipientsRefused as exc:
         raise MailSendError(f"Recipient refused by mail server: {to_email}") from exc
     except smtplib.SMTPSenderRefused as exc:
         raise MailSendError(
             f"Sender refused by mail server: {message['From']}. "
-            "From address must match the Zoho mailbox."
+            "From address must be a verified sender/domain in Brevo."
         ) from exc
     except smtplib.SMTPDataError as exc:
         detail = _smtp_user_message(exc)
@@ -179,18 +179,20 @@ def _send_email(
 
 def _smtp_user_message(exc: smtplib.SMTPException) -> str:
     """Turn provider SMTP codes into actionable operator-facing text."""
-    raw = " ".join(str(part) for part in (getattr(exc, "smtp_code", ""), getattr(exc, "smtp_error", exc)))
+    raw = " ".join(
+        str(part) for part in (getattr(exc, "smtp_code", ""), getattr(exc, "smtp_error", exc))
+    )
     lower = raw.lower()
     if "5.4.6" in raw or "unusual sending activity" in lower:
         return (
             "The mail provider temporarily blocked outbound mail "
-            "(unusual sending activity). Unblock the mailbox in Zoho "
-            "(mail.zoho.com/UnblockMe), then try again."
+            "(unusual sending activity). Check your Brevo account limits "
+            "and sender reputation, then try again."
         )
     if "550" in raw and "spam" in lower:
         return (
             "The mail provider rejected this message as suspected spam. "
-            "Review Zoho sending limits and try again later."
+            "Verify the sending domain in Brevo and try again later."
         )
     return f"SMTP error: {exc}"
 

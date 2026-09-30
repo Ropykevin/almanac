@@ -93,7 +93,13 @@ def client_ip(request: Request) -> str | None:
     return None
 
 
-_BOT_RE = re.compile(r"bot|spider|crawl|slurp|facebookexternalhit", re.I)
+_BOT_RE = re.compile(
+    r"bot|spider|crawl|slurp|facebookexternalhit|curl/|wget|python-requests|"
+    r"scrapy|httpclient|libwww|go-http-client|java/|okhttp|postman|headless|"
+    r"axios/|node-fetch|httpie|php/|aiohttp|mechanize|selenium|puppeteer|"
+    r"playwright|phantomjs|nutch|ahrefs|semrush|bytespider|gptbot|claudebot",
+    re.I,
+)
 
 
 def looks_like_bot(user_agent: str | None) -> bool:

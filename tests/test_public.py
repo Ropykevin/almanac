@@ -66,11 +66,16 @@ def test_search_and_archive(client, app):
 
 
 def test_subscribe(client, app):
+    from app.utils.subscribe_guard import issue_form_started_token
+
+    with app.app_context():
+        form_started = issue_form_started_token()
     response = client.post(
         "/subscribe",
         data={
             "full_name": "Reader One",
             "email": "reader@example.com",
+            "form_started": form_started,
             "submit": "Subscribe",
         },
         headers={"User-Agent": "Mozilla/5.0 (compatible; AlmanacTest/1.0)"},
@@ -97,13 +102,19 @@ def test_subscribe_mail_failure_does_not_500(client, app, monkeypatch):
         "app.services.subscribers.send_subscription_verification_email",
         boom,
     )
+    from app.utils.subscribe_guard import issue_form_started_token
+
+    with app.app_context():
+        form_started = issue_form_started_token()
     response = client.post(
         "/subscribe",
         data={
             "full_name": "Reader Two",
             "email": "reader2@example.com",
+            "form_started": form_started,
             "submit": "Subscribe",
         },
+        headers={"User-Agent": "Mozilla/5.0"},
         follow_redirects=True,
     )
     assert response.status_code == 200

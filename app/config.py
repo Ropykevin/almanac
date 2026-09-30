@@ -87,6 +87,9 @@ class Config:
     # Optional Cloudflare Turnstile (subscribe anti-bot). Both keys required to enable.
     TURNSTILE_SITE_KEY = (_env("TURNSTILE_SITE_KEY") or "").strip()
     TURNSTILE_SECRET_KEY = (_env("TURNSTILE_SECRET_KEY") or "").strip()
+    # Reject subscribe POSTs submitted faster than this (seconds) or older than max.
+    SUBSCRIBE_FORM_MIN_SECONDS = float(_env("SUBSCRIBE_FORM_MIN_SECONDS", "2.5"))
+    SUBSCRIBE_FORM_MAX_SECONDS = float(_env("SUBSCRIBE_FORM_MAX_SECONDS", str(60 * 60 * 6)))
 
     # Paths
     STATIC_FOLDER = "static"
@@ -122,6 +125,8 @@ class TestingConfig(Config):
     LOG_LEVEL = "WARNING"
     LOG_TO_STDOUT = True
     PASSWORD_RESET_MAX_AGE = 3600
+    # Allow instant form POSTs in automated tests.
+    SUBSCRIBE_FORM_MIN_SECONDS = 0
 
 
 def _build_database_url_from_parts() -> str | None:

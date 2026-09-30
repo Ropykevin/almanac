@@ -26,6 +26,13 @@ from app.services import engagement as engagement_service
 from app.services import public as public_service
 from app.services import seo as seo_service
 from app.services import subscribers as subscriber_service
+from app.utils.subscribe_guard import issue_form_started_token
+
+
+def _stamped_subscribe_form() -> SubscribeForm:
+    form = SubscribeForm()
+    form.form_started.data = issue_form_started_token()
+    return form
 
 
 @main_bp.route("/")
@@ -42,7 +49,7 @@ def index():
     seo["page_title"] = current_app.config.get("APP_NAME")
     return render_template(
         "main/index.html",
-        subscribe_form=SubscribeForm(),
+        subscribe_form=_stamped_subscribe_form(),
         projects=project_service.list_published_projects(limit=3),
         tracking_show_all_link=True,
         tracking_always=True,
@@ -304,10 +311,12 @@ def search():
 
 
 @main_bp.route("/subscribe", methods=["GET", "POST"])
-@limiter.limit("8 per minute")
-@limiter.limit("30 per hour")
+@limiter.limit("5 per minute")
+@limiter.limit("15 per hour")
 def subscribe():
     form = SubscribeForm()
+    if request.method == "GET":
+        form.form_started.data = issue_form_started_token()
     if form.validate_on_submit():
         from app.utils.subscribe_guard import evaluate_subscribe_request
 
@@ -317,6 +326,11 @@ def subscribe():
                 flash(
                     "Check your email to confirm your subscription.",
                     "success",
+                )
+            elif guard.reason in {"form_expired", "form_timing"}:
+                flash(
+                    "That signup form expired. Please try again.",
+                    "error",
                 )
             else:
                 flash(
@@ -358,6 +372,9 @@ def subscribe():
         )
         flash(text, category)
         return redirect(url_for("main.subscribe"))
+
+    if not form.form_started.data:
+        form.form_started.data = issue_form_started_token()
 
     from app.services import newsletters as newsletter_service
     from app.services import site_settings as site_settings_service

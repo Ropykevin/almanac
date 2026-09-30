@@ -42,6 +42,7 @@ class Subscriber(db.Model):
     )
     subscribed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     unsubscribed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = created_at_col()
 
     publication: Mapped["Publication"] = relationship(
         "Publication",

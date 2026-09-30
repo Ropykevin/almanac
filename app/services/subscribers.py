@@ -295,6 +295,36 @@ def resend_all_pending(
     return stats
 
 
+def purge_stale_pending(*, older_than_days: int = 7) -> int:
+    """Delete PENDING subscribers that never confirmed within ``older_than_days``."""
+    from datetime import timedelta
+
+    from app.models.base import utcnow
+
+    days = max(int(older_than_days), 1)
+    cutoff = utcnow() - timedelta(days=days)
+    publication = get_or_create_default_publication()
+    stale = list(
+        db.session.scalars(
+            select(Subscriber).where(
+                Subscriber.publication_id == publication.id,
+                Subscriber.status == SubscriberStatus.PENDING,
+                Subscriber.created_at < cutoff,
+            )
+        ).all()
+    )
+    count = len(stale)
+    for subscriber in stale:
+        db.session.delete(subscriber)
+    if count:
+        log_activity(
+            "subscriber.pending_purged",
+            f"Purged {count} pending subscriber(s) older than {days} day(s)",
+        )
+        db.session.commit()
+    return count
+
+
 def set_status(subscriber: Subscriber, status: SubscriberStatus) -> Subscriber:
     subscriber.status = status
     if status == SubscriberStatus.ACTIVE:

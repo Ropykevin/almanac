@@ -1,7 +1,7 @@
 """Public website forms."""
 
 from flask_wtf import FlaskForm
-from wtforms import EmailField, StringField, SubmitField, TextAreaField
+from wtforms import EmailField, HiddenField, StringField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length, Optional
 
 
@@ -26,6 +26,8 @@ class SubscribeForm(FlaskForm):
             "aria-hidden": "true",
         },
     )
+    # Signed timestamp issued on GET; bots that POST instantly are rejected.
+    form_started = HiddenField()
     submit = SubmitField("Subscribe")
 
 

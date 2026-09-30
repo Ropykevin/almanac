@@ -13,6 +13,7 @@ from app.models import User, UserRole
 def register_cli(app: Flask) -> None:
     app.cli.add_command(create_user)
     app.cli.add_command(send_scheduled_newsletters)
+    app.cli.add_command(purge_stale_pending_subscribers)
 
 
 @click.command("create-user")
@@ -63,3 +64,20 @@ def send_scheduled_newsletters() -> None:
 
     count = newsletter_service.process_due_newsletters()
     click.echo(f"Processed {count} scheduled newsletter(s).")
+
+
+@click.command("purge-stale-pending-subscribers")
+@click.option(
+    "--days",
+    default=7,
+    show_default=True,
+    type=int,
+    help="Delete PENDING subscribers older than this many days",
+)
+@with_appcontext
+def purge_stale_pending_subscribers(days: int) -> None:
+    """Remove unconfirmed (PENDING) signups that never verified."""
+    from app.services import subscribers as subscriber_service
+
+    count = subscriber_service.purge_stale_pending(older_than_days=days)
+    click.echo(f"Purged {count} stale pending subscriber(s).")

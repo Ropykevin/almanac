@@ -18,15 +18,26 @@ def _login(client):
     )
 
 
-def test_subscribe_verify_unsubscribe_flow(client, app):
-    response = client.post(
+def _subscribe_post(client, app, **fields):
+    from app.utils.subscribe_guard import issue_form_started_token
+
+    with app.app_context():
+        fields.setdefault("form_started", issue_form_started_token())
+    fields.setdefault("submit", "Subscribe")
+    return client.post(
         "/subscribe",
-        data={
-            "full_name": "Reader One",
-            "email": "reader@example.com",
-            "submit": "Subscribe",
-        },
+        data=fields,
+        headers={"User-Agent": "Mozilla/5.0"},
         follow_redirects=True,
+    )
+
+
+def test_subscribe_verify_unsubscribe_flow(client, app):
+    response = _subscribe_post(
+        client,
+        app,
+        full_name="Reader One",
+        email="reader@example.com",
     )
     assert response.status_code == 200
     assert b"confirm" in response.data.lower()
@@ -59,15 +70,8 @@ def test_subscribe_verify_unsubscribe_flow(client, app):
 
 
 def test_duplicate_subscribe_stays_single_row(client, app):
-    client.post(
-        "/subscribe",
-        data={"email": "dup@example.com", "full_name": "A", "submit": "Subscribe"},
-    )
-    client.post(
-        "/subscribe",
-        data={"email": "dup@example.com", "full_name": "B", "submit": "Subscribe"},
-        follow_redirects=True,
-    )
+    _subscribe_post(client, app, email="dup@example.com", full_name="A")
+    _subscribe_post(client, app, email="dup@example.com", full_name="B")
     with app.app_context():
         rows = Subscriber.query.filter_by(email="dup@example.com").all()
         assert len(rows) == 1

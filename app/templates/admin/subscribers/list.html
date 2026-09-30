@@ -21,6 +21,19 @@
           Resend all pending ({{ counts.PENDING }})
         </button>
       </form>
+      <form
+        method="post"
+        action="{{ url_for('admin.subscriber_delete_pending') }}"
+        onsubmit="return confirm('Permanently delete ALL {{ counts.PENDING }} pending subscriber(s)? This cannot be undone.');"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button
+          type="submit"
+          class="inline-flex rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-800 hover:border-rose-300"
+        >
+          Delete all pending ({{ counts.PENDING }})
+        </button>
+      </form>
       {% endif %}
       <a
         href="{{ url_for('admin.subscriber_export', status=current_status, q=q) }}"

@@ -224,10 +224,16 @@ def send_password_reset_email(to_email: str, token: str) -> None:
 
 def send_subscription_verification_email(to_email: str, token: str) -> None:
     verify_url = url_for("main.verify_subscription", token=token, _external=True)
+    max_age = int(current_app.config.get("SUBSCRIBE_VERIFY_MAX_AGE", 60 * 60 * 48))
+    if max_age >= 3600:
+        validity = f"{max_age // 3600} hour(s)"
+    else:
+        validity = f"{max(max_age // 60, 1)} minute(s)"
     subject = f"Confirm your subscription to {current_app.config['APP_NAME']}"
     body = (
         f"Hello,\n\n"
-        f"Please confirm your subscription to {current_app.config['APP_NAME']}:\n\n"
+        f"Please confirm your subscription to {current_app.config['APP_NAME']}.\n"
+        f"This link expires in {validity}:\n\n"
         f"{verify_url}\n\n"
         f"If you did not request this, you can ignore this email.\n"
     )

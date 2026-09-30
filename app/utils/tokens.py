@@ -33,6 +33,34 @@ def generate_unsubscribe_token(email: str, publication_id: str) -> str:
     )
 
 
+def generate_subscribe_verify_token(email: str) -> str:
+    """Timed confirmation link for double opt-in."""
+    return _serializer("liminal-subscribe-verify").dumps(email.strip().lower())
+
+
+def verify_subscribe_verify_token(
+    token: str, max_age: int | None = None
+) -> str | None:
+    """Return email if the confirmation token is valid and unexpired.
+
+    Raises ``SignatureExpired`` when the token is past ``max_age``.
+    """
+    if max_age is None:
+        max_age = current_app.config.get(
+            "SUBSCRIBE_VERIFY_MAX_AGE",
+            60 * 60 * 48,
+        )
+    try:
+        email = _serializer("liminal-subscribe-verify").loads(token, max_age=max_age)
+    except SignatureExpired:
+        raise
+    except BadSignature:
+        return None
+    if not isinstance(email, str) or "@" not in email:
+        return None
+    return email.strip().lower()
+
+
 def verify_unsubscribe_token(token: str, max_age: int | None = None) -> dict | None:
     """Return payload dict or None. max_age default ~1 year for list-unsubscribe links."""
     if max_age is None:

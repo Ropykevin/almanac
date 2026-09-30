@@ -440,9 +440,15 @@ def newsletter_detail(newsletter_id: str):
 
 @main_bp.route("/subscribe/verify/<token>")
 def verify_subscription(token: str):
-    subscriber = subscriber_service.verify_subscription(token)
+    subscriber, error = subscriber_service.verify_subscription(token)
     if subscriber is None:
-        flash("That confirmation link is invalid or has already been used.", "error")
+        if error == "expired":
+            flash(
+                "That confirmation link has expired. Subscribe again to get a new one.",
+                "error",
+            )
+        else:
+            flash("That confirmation link is invalid or has already been used.", "error")
         return redirect(url_for("main.subscribe"))
     flash("Subscription confirmed. Welcome to Africa’s AI Almanac.", "success")
     return redirect(url_for("main.index"))

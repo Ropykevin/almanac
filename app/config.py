@@ -71,6 +71,10 @@ class Config:
     UNSUBSCRIBE_TOKEN_MAX_AGE = int(
         _env("UNSUBSCRIBE_TOKEN_MAX_AGE", str(60 * 60 * 24 * 365))
     )
+    # Subscribe confirmation link lifetime (default 48 hours)
+    SUBSCRIBE_VERIFY_MAX_AGE = int(
+        _env("SUBSCRIBE_VERIFY_MAX_AGE", str(60 * 60 * 48))
+    )
     # Open/click tracking token lifetime (default 90 days)
     NEWSLETTER_TRACKING_MAX_AGE = int(
         _env("NEWSLETTER_TRACKING_MAX_AGE", str(60 * 60 * 24 * 90))

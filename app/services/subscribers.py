@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import csv
 import io
-import secrets
 import time
 import uuid
 from datetime import datetime, timezone
 
+from itsdangerous import SignatureExpired
 from sqlalchemy import func, or_, select
 
 from app.extensions import db
@@ -21,7 +21,12 @@ from app.utils.email import (
     send_subscription_verification_email,
     send_unsubscribe_confirmation_email,
 )
-from app.utils.tokens import generate_unsubscribe_token, verify_unsubscribe_token
+from app.utils.tokens import (
+    generate_subscribe_verify_token,
+    generate_unsubscribe_token,
+    verify_subscribe_verify_token,
+    verify_unsubscribe_token,
+)
 
 
 class SubscriberError(ValueError):
@@ -36,8 +41,8 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def _new_verification_token() -> str:
-    return secrets.token_urlsafe(32)
+def _new_verification_token(email: str) -> str:
+    return generate_subscribe_verify_token(email)
 
 
 def get_subscriber(subscriber_id: uuid.UUID) -> Subscriber | None:
@@ -119,7 +124,7 @@ def subscribe_email(
     if existing is not None and existing.status == SubscriberStatus.ACTIVE:
         return existing, "already_active"
 
-    token = _new_verification_token()
+    token = _new_verification_token(email)
 
     if existing is not None:
         was_unsubscribed = existing.status == SubscriberStatus.UNSUBSCRIBED
@@ -172,21 +177,36 @@ def _try_send_verification(email: str, token: str) -> str | None:
         return str(exc)
 
 
-def verify_subscription(token: str) -> Subscriber | None:
+def verify_subscription(token: str) -> tuple[Subscriber | None, str | None]:
+    """Activate a PENDING subscriber from a confirmation link.
+
+    Returns ``(subscriber, None)`` on success, or ``(None, reason)`` where
+    reason is ``"expired"`` or ``"invalid"``.
+    """
     if not token:
-        return None
+        return None, "invalid"
+    try:
+        email = verify_subscribe_verify_token(token)
+    except SignatureExpired:
+        return None, "expired"
+    if email is None:
+        return None, "invalid"
+
     subscriber = db.session.scalar(
         select(Subscriber).where(Subscriber.verification_token == token)
     )
-    if subscriber is None:
-        return None
+    if subscriber is None or subscriber.email != email:
+        return None, "invalid"
+    if subscriber.status != SubscriberStatus.PENDING:
+        return None, "invalid"
+
     subscriber.status = SubscriberStatus.ACTIVE
     subscriber.verification_token = None
     subscriber.subscribed_at = _now()
     subscriber.unsubscribed_at = None
     log_activity("subscriber.verified", f"Verified {subscriber.email}")
     db.session.commit()
-    return subscriber
+    return subscriber, None
 
 
 def unsubscribe_by_token(token: str) -> Subscriber | None:
@@ -241,7 +261,7 @@ def unsubscribe_link_for(subscriber: Subscriber) -> str:
 def resend_verification(subscriber: Subscriber) -> None:
     if subscriber.status == SubscriberStatus.ACTIVE:
         raise SubscriberError("Subscriber is already active.")
-    token = _new_verification_token()
+    token = _new_verification_token(subscriber.email)
     subscriber.status = SubscriberStatus.PENDING
     subscriber.verification_token = token
     log_activity(
@@ -336,7 +356,7 @@ def set_status(subscriber: Subscriber, status: SubscriberStatus) -> Subscriber:
         subscriber.verification_token = None
     elif status == SubscriberStatus.PENDING:
         if not subscriber.verification_token:
-            subscriber.verification_token = _new_verification_token()
+            subscriber.verification_token = _new_verification_token(subscriber.email)
     log_activity("subscriber.status_changed", f"{subscriber.email} → {status.value}")
     db.session.commit()
     return subscriber
@@ -361,7 +381,7 @@ def create_subscriber_admin(
         subscribed_at=_now() if status == SubscriberStatus.ACTIVE else None,
         unsubscribed_at=_now() if status == SubscriberStatus.UNSUBSCRIBED else None,
         verification_token=(
-            _new_verification_token() if status == SubscriberStatus.PENDING else None
+            _new_verification_token(email) if status == SubscriberStatus.PENDING else None
         ),
     )
     db.session.add(subscriber)
@@ -392,6 +412,31 @@ def delete_subscriber(subscriber: Subscriber) -> None:
     log_activity("subscriber.deleted", f"Deleted subscriber {email}")
     db.session.delete(subscriber)
     db.session.commit()
+
+
+def delete_subscribers_by_status(status: SubscriberStatus) -> int:
+    """Delete all subscribers with the given status. Refuses ACTIVE."""
+    if status == SubscriberStatus.ACTIVE:
+        raise SubscriberError("Refusing to bulk-delete ACTIVE subscribers.")
+    publication = get_or_create_default_publication()
+    rows = list(
+        db.session.scalars(
+            select(Subscriber).where(
+                Subscriber.publication_id == publication.id,
+                Subscriber.status == status,
+            )
+        ).all()
+    )
+    count = len(rows)
+    for subscriber in rows:
+        db.session.delete(subscriber)
+    if count:
+        log_activity(
+            "subscriber.bulk_deleted",
+            f"Bulk deleted {count} subscriber(s) with status {status.value}",
+        )
+        db.session.commit()
+    return count
 
 
 def export_csv(subscribers: list[Subscriber] | None = None) -> str:
@@ -465,7 +510,7 @@ def import_csv(file_storage) -> dict[str, int]:
                         _now() if status == SubscriberStatus.UNSUBSCRIBED else None
                     ),
                     verification_token=(
-                        _new_verification_token()
+                        _new_verification_token(email)
                         if status == SubscriberStatus.PENDING
                         else None
                     ),
@@ -483,7 +528,7 @@ def import_csv(file_storage) -> dict[str, int]:
                 existing.unsubscribed_at = existing.unsubscribed_at or _now()
                 existing.verification_token = None
             elif status == SubscriberStatus.PENDING and not existing.verification_token:
-                existing.verification_token = _new_verification_token()
+                existing.verification_token = _new_verification_token(email)
             stats["updated"] += 1
 
     log_activity(

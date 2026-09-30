@@ -213,7 +213,7 @@ Includes reading time, author section, related articles, responsive navigation, 
 
 Double opt-in newsletter subscriptions with admin management:
 
-- Public subscribe creates a **PENDING** subscriber and sends a verification email (logged when SMTP is unset). Active only after the link is confirmed.
+- Public subscribe creates a **PENDING** subscriber and sends a verification email (logged when SMTP is unset). Active only after the link is confirmed (link expires after `SUBSCRIBE_VERIFY_MAX_AGE`, default 48h).
 - Subscribe anti-abuse: honeypot, form timing token, disposable-email / suspicious local-part checks, bot UA filter, optional Cloudflare Turnstile (`TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`), and tighter rate limits
 - Purge unconfirmed signups: `flask purge-stale-pending-subscribers --days 7` (cron recommended)
 - Email confirmation activates the subscription (**ACTIVE**)

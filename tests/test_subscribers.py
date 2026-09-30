@@ -69,6 +69,27 @@ def test_subscribe_verify_unsubscribe_flow(client, app):
         assert sub.status == SubscriberStatus.UNSUBSCRIBED
 
 
+def test_subscribe_verify_link_expires(client, app):
+    _subscribe_post(
+        client,
+        app,
+        full_name="Late Reader",
+        email="late@example.com",
+    )
+    with app.app_context():
+        sub = Subscriber.query.filter_by(email="late@example.com").one()
+        token = sub.verification_token
+        assert token
+        app.config["SUBSCRIBE_VERIFY_MAX_AGE"] = -1
+
+    expired = client.get(f"/subscribe/verify/{token}", follow_redirects=True)
+    assert expired.status_code == 200
+    assert b"expired" in expired.data.lower()
+    with app.app_context():
+        sub = Subscriber.query.filter_by(email="late@example.com").one()
+        assert sub.status == SubscriberStatus.PENDING
+
+
 def test_duplicate_subscribe_stays_single_row(client, app):
     _subscribe_post(client, app, email="dup@example.com", full_name="A")
     _subscribe_post(client, app, email="dup@example.com", full_name="B")
@@ -183,3 +204,36 @@ def test_admin_resend_all_pending(client, editor, app, monkeypatch):
     assert response.status_code == 200
     assert b"Resent confirmation" in response.data
     assert sorted(sent) == ["p1@example.com", "p2@example.com"]
+
+
+def test_admin_bulk_delete_pending(client, editor, app):
+    _login(client)
+    with app.app_context():
+        subscriber_service.create_subscriber_admin(
+            email="gone1@example.com",
+            full_name="Gone1",
+            status=SubscriberStatus.PENDING,
+        )
+        subscriber_service.create_subscriber_admin(
+            email="gone2@example.com",
+            full_name="Gone2",
+            status=SubscriberStatus.PENDING,
+        )
+        subscriber_service.create_subscriber_admin(
+            email="keep@example.com",
+            full_name="Keep",
+            status=SubscriberStatus.ACTIVE,
+        )
+
+    response = client.post(
+        "/admin/subscribers/delete-pending",
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Deleted 2 pending" in response.data
+    with app.app_context():
+        assert Subscriber.query.filter_by(email="gone1@example.com").first() is None
+        assert Subscriber.query.filter_by(email="gone2@example.com").first() is None
+        assert Subscriber.query.filter_by(email="keep@example.com").one().status == (
+            SubscriberStatus.ACTIVE
+        )

@@ -150,6 +150,27 @@ def subscriber_resend_pending():
     return redirect(url_for("admin.subscriber_list", status="PENDING"))
 
 
+@admin_bp.route("/subscribers/delete-pending", methods=["POST"])
+@login_required
+@staff_required
+def subscriber_delete_pending():
+    try:
+        count = subscriber_service.delete_subscribers_by_status(
+            SubscriberStatus.PENDING
+        )
+    except subscriber_service.SubscriberError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("admin.subscriber_list", status="PENDING"))
+    if count == 0:
+        flash("No pending subscribers to delete.", "info")
+    else:
+        flash(
+            f"Deleted {count} pending subscriber{'s' if count != 1 else ''}.",
+            "info",
+        )
+    return redirect(url_for("admin.subscriber_list", status="PENDING"))
+
+
 @admin_bp.route("/subscribers/<subscriber_id>/resend", methods=["POST"])
 @login_required
 @staff_required
